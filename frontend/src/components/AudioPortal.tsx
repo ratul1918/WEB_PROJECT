@@ -28,7 +28,10 @@ export function AudioPortal() {
   });
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <>
+      {/* Aurora Background */}
+      <div className="audio-portal-aurora" style={{ display: 'block' }} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       {/* Main Content */}
       <div className="lg:col-span-2">
         {/* Header - VIBRANT GRADIENT STYLE */}
@@ -235,5 +238,6 @@ export function AudioPortal() {
         initialType="audio"
       />
     </div>
+    </>
   );
 }

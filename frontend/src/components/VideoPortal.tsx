@@ -30,9 +30,12 @@ export function VideoPortal() {
   });
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      {/* Main Content */}
-      <div className="lg:col-span-2">
+    <>
+      {/* Aurora Background */}
+      <div className="video-portal-aurora" style={{ display: 'block' }} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Main Content */}
+        <div className="lg:col-span-2">
         {/* Header - CINEMATIC STYLE */}
         <div className="bg-zinc-900 rounded-2xl p-6 shadow-xl shadow-black/50 mb-8 border-b border-zinc-700 relative overflow-hidden group">
           <div className="absolute inset-0 bg-gradient-to-r from-red-600/10 to-transparent pointer-events-none" />
@@ -238,5 +241,6 @@ export function VideoPortal() {
         initialType="video"
       />
     </div>
+    </>
   );
 }

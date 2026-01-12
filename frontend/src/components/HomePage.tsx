@@ -39,7 +39,10 @@ export function HomePage() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <>
+      {/* Aurora Background */}
+      <div className="home-page-aurora" style={{ display: 'block' }} />
+      <div className="max-w-7xl mx-auto">
       {/* Header */}
       <motion.div
         className="text-center mb-12"
@@ -177,5 +180,6 @@ export function HomePage() {
         </div>
       </motion.div>
     </div>
+    </>
   );
 }

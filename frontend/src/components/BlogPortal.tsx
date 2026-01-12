@@ -25,7 +25,10 @@ export function BlogPortal() {
   });
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <>
+      {/* Aurora Background */}
+      <div className="blog-portal-aurora" style={{ display: 'block' }} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       {/* Main Content */}
       <div className="lg:col-span-2">
         {/* Header - MINIMALIST / WRITERLY STYLE */}
@@ -189,5 +192,6 @@ export function BlogPortal() {
         <PortalLeaderboard portalType="blog" accentColor="indigo" />
       </div>
     </div>
+    </>
   );
 }

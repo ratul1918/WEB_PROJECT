@@ -44,7 +44,10 @@ export function Dashboard() {
     );
 
     return (
-        <div className="space-y-8">
+        <>
+            {/* Aurora Background */}
+            <div className="home-page-aurora" style={{ display: 'block' }} />
+            <div className="space-y-8">
             {/* Header */}
             <motion.div
                 initial={{ opacity: 0, y: -20 }}
@@ -149,5 +152,6 @@ export function Dashboard() {
                 </div>
             </motion.div>
         </div>
+        </>
     );
 }
