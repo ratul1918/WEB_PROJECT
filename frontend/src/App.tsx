@@ -26,7 +26,9 @@ function MainLayout({ children }: { children: ReactNode }) {
   const location = useLocation();
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gray-50/50">
+    <div className="min-h-screen relative overflow-hidden">
+      <div className="cool-aurora"></div>
+      <div className="cool-aurora-accent"></div>
       <BackgroundAnimation />
       <Navbar currentPath={location.pathname} onLogout={logout} user={user} />
       <main className="container mx-auto px-4 py-8 relative z-10">
