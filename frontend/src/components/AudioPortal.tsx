@@ -1,14 +1,12 @@
 import { useState } from 'react';
-import { Mic, Clock, AlertCircle, X, Play, Edit, Trash2, Headphones } from 'lucide-react';
+import { Mic, Clock, AlertCircle, X, Play, Edit, Trash2, Headphones, Star } from 'lucide-react';
 import { PortalLeaderboard } from './PortalLeaderboard';
 import { useAuth } from '../contexts/AuthContext';
 import { canEditPost, canDeletePost } from '../utils/permissions';
 import { usePosts } from '../contexts/PostContext';
-import { Post } from '../types/auth';
-
-
-
+import { AudioPlayer } from './AudioPlayer';
 import { UploadModal } from './UploadModal';
+import { Post } from '../types/auth';
 
 export function AudioPortal() {
   const { user } = useAuth();
@@ -17,6 +15,7 @@ export function AudioPortal() {
   const [showWarning, setShowWarning] = useState(false);
   const [activePlaying, setActivePlaying] = useState<string | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [activeTrack, setActiveTrack] = useState<Post | null>(null);
 
   // Get Approved Audio Posts
   const mockAudio = getPostsByType('audio').filter(p => p.status === 'approved') as Post[];
@@ -84,15 +83,37 @@ export function AudioPortal() {
         {user?.role === 'creator' && (
           <button
             onClick={() => setIsUploadModalOpen(true)}
-            className="mb-8 w-full bg-transparent border-2 border-purple-500 text-purple-100 hover:bg-purple-500 hover:text-white py-8 px-6 rounded-2xl transition-all duration-300 shadow-[0_0_15px_rgba(168,85,247,0.2)] hover:shadow-[0_0_25px_rgba(168,85,247,0.5)] flex flex-col items-center justify-center gap-4 group"
+            className="mb-8 w-full bg-transparent border-2 border-purple-500 text-purple-100 hover:bg-purple-500 hover:text-white py-8 px-6 rounded-2xl portal-button flex flex-col items-center justify-center gap-4 group"
           >
             <Mic className="w-12 h-12 group-hover:scale-110 transition-transform duration-300" />
             <span className="font-bold text-xl tracking-wide">Start a Broadcast</span>
           </button>
         )}
 
+        {/* Active Audio Player */}
+        {activeTrack && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-heading text-lg font-bold text-purple-900">Now Playing</h3>
+              <button
+                onClick={() => setActiveTrack(null)}
+                className="p-2 text-purple-400 hover:text-purple-600 hover:bg-purple-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <AudioPlayer
+              src={activeTrack.thumbnail || ''}
+              title={activeTrack.title || ''}
+              artist={activeTrack.authorName || 'Unknown'}
+              coverImage={activeTrack.thumbnail || ''}
+              duration={activeTrack.duration ? parseFloat(activeTrack.duration) : undefined}
+            />
+          </div>
+        )}
+
         {/* Audio List - PLAYER CARD STYLE */}
-        <div className="space-y-4">
+        <div className="space-y-3 portal-grid">
           {sortedAudios.map((audio, index) => {
             const isPlaying = activePlaying === audio.id;
 
@@ -116,7 +137,7 @@ export function AudioPortal() {
             return (
               <div
                 key={audio.id}
-                className={`group bg-white rounded-2xl p-4 shadow-sm hover:shadow-md border border-gray-100 hover:border-purple-200 transition-all flex items-center gap-4 ${isPlaying ? 'ring-2 ring-purple-500 ring-offset-2' : ''}`}
+                className={`group bg-white rounded-2xl p-4 shadow-sm hover:shadow-md border border-gray-100 hover:border-purple-200 portal-card portal-entry transition-all flex items-center gap-4 ${isPlaying ? 'ring-2 ring-purple-500 ring-offset-2' : ''}`}
               >
                 {/* Ranking Index (for visuals) */}
                 <span className="font-mono text-gray-300 font-bold text-xl w-6 text-center hidden sm:block">
@@ -124,14 +145,11 @@ export function AudioPortal() {
                 </span>
 
                 {/* Thumbnail/Cover */}
-                <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-lg overflow-hidden shadow-md">
+                <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-lg overflow-hidden shadow-md cursor-pointer" onClick={() => setActiveTrack(audio)}>
                   <img src={audio.thumbnail} alt={audio.title} className="w-full h-full object-cover" />
-                  <button
-                    onClick={() => setActivePlaying(isPlaying ? null : audio.id)}
-                    className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    {isPlaying ? <span className="w-4 h-4 bg-white animate-pulse rounded-full" /> : <Headphones className="w-8 h-8 text-white fill-white/20" />}
-                  </button>
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Headphones className="w-8 h-8 text-[#B399D4] fill-[#B399D4]/20 transition-colors" />
+                  </div>
                 </div>
 
                 {/* Info */}
@@ -150,7 +168,7 @@ export function AudioPortal() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-sm font-medium text-zinc-300 group-hover:text-white transition-colors">
+                    <span className="text-sm font-medium text-gray-600 group-hover:text-purple-600 transition-colors">
                       {audio.authorName}
                     </span>
                   </div>
@@ -158,6 +176,13 @@ export function AudioPortal() {
 
                 {/* Stats & Actions */}
                 <div className="flex items-center gap-6">
+                  <div className="text-right hidden md:block">
+                    <div className="flex items-center gap-1.5 text-gray-700">
+                      <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                      <span className="font-bold text-base">{audio.rating.toFixed(1)}</span>
+                    </div>
+                    <div className="text-xs text-gray-400 font-medium uppercase tracking-wider">Rating</div>
+                  </div>
                   <div className="text-right hidden md:block">
                     <div className="text-xs text-gray-400 font-medium uppercase tracking-wider">Plays</div>
                     <div className="font-mono font-semibold text-gray-700">{audio.views.toLocaleString()}</div>

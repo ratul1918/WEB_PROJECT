@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertCircle, X, Edit, Trash2, Feather, ArrowRight, BookOpen } from 'lucide-react';
+import { AlertCircle, X, Edit, Trash2, Feather, ArrowRight, BookOpen, Star } from 'lucide-react';
 import { PortalLeaderboard } from './PortalLeaderboard';
 import { useAuth } from '../contexts/AuthContext';
 import { canEditPost, canDeletePost } from '../utils/permissions';
@@ -76,7 +76,7 @@ export function BlogPortal() {
         {user?.role === 'creator' && (
           <button
             onClick={() => setIsUploadModalOpen(true)}
-            className="mb-8 w-full bg-white border-2 border-stone-800 text-stone-800 hover:bg-stone-800 hover:text-white py-8 px-6 rounded-sm transition-all duration-300 shadow-sm hover:shadow-md flex flex-col items-center justify-center gap-4 group"
+            className="mb-8 w-full bg-white border-2 border-stone-800 text-stone-800 hover:bg-stone-800 hover:text-white py-8 px-6 rounded-sm portal-button flex flex-col items-center justify-center gap-4 group"
           >
             <Edit className="w-12 h-12 group-hover:scale-110 transition-transform duration-300" />
             <span className="font-serif text-2xl italic">Draft a New Story</span>
@@ -84,8 +84,8 @@ export function BlogPortal() {
         )}
 
         {/* Blog List - CLEAN EDITORIAL LAYOUT */}
-        <div className="space-y-8">
-          {sortedBlogs.map((blog) => {
+        <div className="space-y-6 portal-grid">
+          {sortedBlogs.map((blog, index) => {
             // Compatibility: use direct Post type from context
             const postForPermission = blog;
 
@@ -100,12 +100,17 @@ export function BlogPortal() {
                 <div className="md:flex gap-8 items-start">
                   {/* Content - First on desktop for emphasis on title */}
                   <div className="flex-1 order-2 md:order-1">
-                    <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center gap-3 mb-3">
                       <span className="text-xs font-bold font-sans text-stone-900 uppercase tracking-wider">
                         {blog.duration ? blog.duration : '5 min read'}
                       </span>
                       <span className="text-stone-300">•</span>
                       <span className="text-xs font-serif text-stone-500 italic">{blog.authorName}</span>
+                      <span className="text-stone-300">•</span>
+                      <div className="flex items-center gap-1">
+                        <Star className="w-3 h-3 text-yellow-500 fill-yellow-500 portal-star" />
+                        <span className="text-xs font-bold text-stone-900">{blog.rating.toFixed(1)}</span>
+                      </div>
                     </div>
 
                     <h2 className="font-serif text-2xl md:text-3xl text-stone-900 leading-tight mb-3 group-hover:underline decoration-stone-400 underline-offset-4 decoration-2">
@@ -117,7 +122,7 @@ export function BlogPortal() {
                     </p>
 
                     <div className="flex items-center justify-between mt-4">
-                      <div className="flex items-center gap-1 text-sm font-medium text-stone-400 group-hover:text-stone-900 transition-colors">
+                      <div className="flex items-center gap-1 text-sm font-medium text-stone-400 group-hover:text-[#6B7A8F] portal-button transition-colors">
                         Read Article <ArrowRight className="w-4 h-4" />
                       </div>
 

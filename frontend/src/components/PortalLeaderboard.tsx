@@ -1,4 +1,6 @@
 import { Trophy, Medal, Award, Star } from 'lucide-react';
+import { usePosts } from '../contexts/PostContext';
+import { Post } from '../types/auth';
 
 interface LeaderboardEntry {
   rank: number;
@@ -14,43 +16,42 @@ interface PortalLeaderboardProps {
 }
 
 export function PortalLeaderboard({ portalType, accentColor }: PortalLeaderboardProps) {
-  const mockLeaderboard: LeaderboardEntry[] = [
-    {
-      rank: 1,
-      username: 'Sarah Johnson',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100',
-      rating: 4.9,
-      totalScore: 9850,
-    },
-    {
-      rank: 2,
-      username: 'Mike Chen',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100',
-      rating: 4.8,
-      totalScore: 9720,
-    },
-    {
-      rank: 3,
-      username: 'Emma Davis',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100',
-      rating: 4.7,
-      totalScore: 9560,
-    },
-    {
-      rank: 4,
-      username: 'Alex Rahman',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100',
-      rating: 4.6,
-      totalScore: 9340,
-    },
-    {
-      rank: 5,
-      username: 'Lisa Martinez',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100',
-      rating: 4.5,
-      totalScore: 9120,
-    },
-  ];
+  const { getPostsByType } = usePosts();
+
+  const getApprovedPostsByPortal = (type: 'video' | 'audio' | 'blog') => {
+    return getPostsByType(type).filter(p => p.status === 'approved') as Post[];
+  };
+
+  const approvedPosts = getApprovedPostsByPortal(portalType);
+
+  const generateLeaderboard = (posts: Post[]): LeaderboardEntry[] => {
+    if (posts.length === 0) return [];
+
+    const authorStats = new Map<string, { rating: number; totalScore: number; postCount: number; avatar: string }>();
+
+    posts.forEach(post => {
+      const existing = authorStats.get(post.authorId) || { rating: 0, totalScore: 0, postCount: 0, avatar: post.thumbnail || 'https://via.placeholder.com/100' };
+      existing.rating += post.rating;
+      existing.totalScore += (post.rating * 1000) + post.views;
+      existing.postCount += 1;
+      authorStats.set(post.authorId, existing);
+    });
+
+    const leaderboard: LeaderboardEntry[] = Array.from(authorStats.entries())
+      .map(([authorId, stats], index) => ({
+        rank: index + 1,
+        username: posts.find(p => p.authorId === authorId)?.authorName || 'Unknown',
+        avatar: stats.avatar,
+        rating: parseFloat((stats.rating / stats.postCount).toFixed(1)),
+        totalScore: stats.totalScore,
+      }))
+      .sort((a, b) => b.totalScore - a.totalScore)
+      .slice(0, 5);
+
+    return leaderboard;
+  };
+
+  const leaderboard = generateLeaderboard(approvedPosts);
 
   const colorClasses = {
     orange: {
@@ -137,10 +138,10 @@ export function PortalLeaderboard({ portalType, accentColor }: PortalLeaderboard
 
       {/* Leaderboard Entries */}
       <div className="space-y-3">
-        {mockLeaderboard.map((entry) => (
+        {leaderboard.map((entry: LeaderboardEntry, index) => (
           <div
             key={entry.rank}
-            className={`p-3 rounded-xl transition-all cursor-pointer ${colors.hover} border border-transparent hover:border-white/50`}
+            className={`p-3 rounded-xl transition-all cursor-pointer ${colors.hover} portal-leaderboard-item portal-entry border border-transparent hover:border-white/50`}
           >
             <div className="flex items-center gap-3 mb-2">
               {/* Rank */}
