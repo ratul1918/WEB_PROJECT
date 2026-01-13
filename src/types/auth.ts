@@ -105,7 +105,7 @@ export const MOCK_USERS = {
   },
   admin: {
     id: 'admin-1',
-    name: 'Admin User',
+    name: 'Admin',
     email: 'admin@uiu.ac.bd',
     password: 'admin123',
     role: 'admin' as UserRole,

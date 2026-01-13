@@ -121,8 +121,9 @@ export function AudioPortal() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search audio..."
-              className="w-full pl-10 pr-10 py-3 rounded-xl border-2 border-gray-200 focus:border-teal-600 focus:outline-none transition-colors text-gray-900 placeholder-gray-400"
+              placeholder="Search Audio..."
+              style={{ paddingLeft: '3.5rem' }}
+              className="w-full pr-10 py-3 rounded-xl border-2 border-gray-200 focus:border-teal-600 focus:outline-none transition-colors text-gray-900 placeholder-gray-400"
             />
             {searchQuery && (
               <button
@@ -218,7 +219,7 @@ export function AudioPortal() {
 
       {/* Leaderboard Sidebar */}
       <div className="lg:col-span-1">
-        <PortalLeaderboard portalType="audio" accentColor="orange" />
+        <PortalLeaderboard portalType="audio" />
       </div>
     </div>
   );

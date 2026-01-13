@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 export function HomePage() {
   const navigate = useNavigate();
-  
+
   const portals = [
     {
       path: '/video',
@@ -150,6 +150,7 @@ export function HomePage() {
             </p>
             <motion.button
               className="bg-white text-orange-600 px-6 py-3 rounded-xl hover:bg-orange-50 transition-colors"
+              onClick={() => navigate('/video')}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >

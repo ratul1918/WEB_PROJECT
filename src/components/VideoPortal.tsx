@@ -124,7 +124,8 @@ export function VideoPortal() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search videos..."
-              className="w-full pl-10 pr-10 py-3 rounded-xl border-2 border-gray-200 focus:border-orange-500 focus:outline-none transition-colors text-gray-900 placeholder-gray-400"
+              style={{ paddingLeft: '3.5rem' }}
+              className="w-full pr-10 py-3 rounded-xl border-2 border-gray-200 focus:border-orange-500 focus:outline-none transition-colors text-gray-900 placeholder-gray-400"
             />
             {searchQuery && (
               <button
@@ -226,7 +227,7 @@ export function VideoPortal() {
 
       {/* Leaderboard Sidebar */}
       <div className="lg:col-span-1">
-        <PortalLeaderboard portalType="video" accentColor="orange" />
+        <PortalLeaderboard portalType="video" />
       </div>
     </div>
   );

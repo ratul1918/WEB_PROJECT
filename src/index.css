@@ -103,6 +103,7 @@
     --color-amber-600: oklch(.666 .179 58.318);
     --color-amber-800: oklch(.473 .137 46.201);
     --color-yellow-400: oklch(.852 .199 91.936);
+    --color-yellow-500: oklch(.769 .184 85.872);
     --color-yellow-600: oklch(.681 .162 75.834);
     --color-green-600: oklch(.627 .194 149.214);
     --color-teal-50: oklch(.984 .014 180.72);
@@ -519,6 +520,23 @@
     font-weight: var(--font-weight-normal);
     line-height: 1.5;
   }
+}
+
+/* Fix for buttons with background color classes - override the transparent background reset */
+button[class*="bg-yellow"] {
+  background-color: var(--color-yellow-500) !important;
+}
+
+button[class*="bg-orange"] {
+  background-color: var(--color-orange-500) !important;
+}
+
+button[class*="bg-white"] {
+  background-color: var(--color-white) !important;
+}
+
+button[class*="bg-gray"] {
+  background-color: var(--color-gray-200) !important;
 }
 
 @layer utilities {

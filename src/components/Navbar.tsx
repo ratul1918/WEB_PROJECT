@@ -1,4 +1,4 @@
-import { Video, Mic, BookOpen, Home, Trophy, Trash2, User as UserIcon, LogOut, LayoutDashboard } from 'lucide-react';
+import { Video, Mic, BookOpen, Home, Trophy, Clock, Trash2, User as UserIcon, LogOut, LayoutDashboard } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { User } from '../types/auth';
 import { hasMinimumRole, canAccessGarbageBin } from '../utils/permissions';
@@ -17,6 +17,7 @@ export function Navbar({ currentPath, onLogout, user }: NavbarProps) {
     { path: '/audio', label: 'Audio', icon: Mic, minRole: 'viewer' as const },
     { path: '/blogs', label: 'Blogs', icon: BookOpen, minRole: 'viewer' as const },
     { path: '/leaderboard', label: 'Leaderboard', icon: Trophy, minRole: 'viewer' as const },
+    { path: '/pending-posts', label: 'Pending Posts', icon: Clock, minRole: 'admin' as const },
     { path: '/garbage', label: 'Garbage Bin', icon: Trash2, minRole: null, adminOnly: true },
     { path: '/profile', label: 'Profile', icon: UserIcon, minRole: 'viewer' as const },
   ].filter(item => {

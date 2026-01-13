@@ -9,6 +9,7 @@ import { AudioPortal } from './components/AudioPortal';
 import { AudioListenPage } from './components/AudioListenPage';
 import { BlogPortal } from './components/BlogPortal';
 import { Leaderboard } from './components/Leaderboard';
+import { PendingPosts } from './components/PendingPosts';
 import { GarbageBin } from './components/GarbageBin';
 import { Profile } from './components/Profile';
 import { Login } from './components/Login';
@@ -16,6 +17,7 @@ import { Signup } from './components/Signup';
 import { Footer } from './components/Footer';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { PostProvider } from './contexts/PostContext';
+import { LeaderboardProvider } from './contexts/LeaderboardContext';
 import { ProtectedRoute, PublicRoute } from './components/auth/ProtectedRoute';
 import { AdminDashboard } from './components/AdminDashboard';
 import { canAccessGarbageBin } from './utils/permissions';
@@ -209,6 +211,16 @@ function AppContent() {
         }
       />
       <Route
+        path="/pending-posts"
+        element={
+          <ProtectedRoute minimumRole="admin">
+            <MainLayout>
+              <PendingPosts />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/garbage"
         element={
           <ProtectedRoute>
@@ -249,9 +261,12 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <PostProvider>
-          <AppContent />
+          <LeaderboardProvider>
+            <AppContent />
+          </LeaderboardProvider>
         </PostProvider>
       </AuthProvider>
     </BrowserRouter>
   );
 }
+

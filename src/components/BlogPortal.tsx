@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { BookOpen, Star, TrendingUp, Clock, Award, AlertCircle, X, Upload, PenTool } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { BookOpen, Star, TrendingUp, Clock, Award, AlertCircle, X, Upload, PenTool, Filter, ChevronDown } from 'lucide-react';
 import { PortalLeaderboard } from './PortalLeaderboard';
 import { UploadModal } from './UploadModal';
 import { InteractiveModal } from './InteractiveModal';
@@ -15,6 +15,27 @@ export function BlogPortal() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isInteractiveModalOpen, setIsInteractiveModalOpen] = useState(false);
   const [uploadType, setUploadType] = useState<'video' | 'audio' | 'blog'>('blog');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [selectedRating, setSelectedRating] = useState<string>('All');
+  const filterRef = useRef<HTMLDivElement>(null);
+
+  // Close filter dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
+        setIsFilterOpen(false);
+      }
+    };
+
+    if (isFilterOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isFilterOpen]);
 
   const handleUploadClick = (type: 'video' | 'audio' | 'blog' = 'blog') => {
     setUploadType(type);
@@ -25,10 +46,44 @@ export function BlogPortal() {
     setIsInteractiveModalOpen(true);
   };
 
+  // Categories for filtering
+  const categories = ['All', 'Tech', 'Education', 'Motivation', 'Lifestyle', 'News'];
+
+  // Helper function to extract category from blog title (temporary solution)
+  const getBlogCategory = (blog: any): string => {
+    const title = blog.title.toLowerCase();
+    if (title.includes('ai') || title.includes('tech') || title.includes('web') || title.includes('digital') || title.includes('crypto') || title.includes('data') || title.includes('iot')) return 'Tech';
+    if (title.includes('student') || title.includes('university') || title.includes('study') || title.includes('career') || title.includes('learning')) return 'Education';
+    if (title.includes('mental') || title.includes('motivation') || title.includes('success') || title.includes('productivity') || title.includes('leadership')) return 'Motivation';
+    if (title.includes('sustainable') || title.includes('time management') || title.includes('work-life') || title.includes('personal brand') || title.includes('financial')) return 'Lifestyle';
+    if (title.includes('climate') || title.includes('future') || title.includes('remote work')) return 'News';
+    return 'Lifestyle'; // default
+  };
+
   // Use context posts exclusively
   const portalBlogs = posts.filter(p => p.type === 'blog' && p.status === 'approved');
 
-  const sortedBlogs = portalBlogs.sort((a, b: any) => {
+  // Apply filters
+  const filteredBlogs = portalBlogs.filter(blog => {
+    // Category filter
+    const blogCategory = getBlogCategory(blog);
+    const categoryMatch = selectedCategory === 'All' || blogCategory === selectedCategory;
+
+    // Rating filter
+    let ratingMatch = true;
+    if (selectedRating === '5⭐') {
+      ratingMatch = blog.rating >= 4.9;
+    } else if (selectedRating === '4⭐ & above') {
+      ratingMatch = blog.rating >= 4.0;
+    } else if (selectedRating === '3⭐ & above') {
+      ratingMatch = blog.rating >= 3.0;
+    }
+
+    return categoryMatch && ratingMatch;
+  });
+
+  // Sort filtered blogs
+  const sortedBlogs = filteredBlogs.sort((a, b: any) => {
     if (sortBy === 'latest') return b.uploadDate.getTime() - a.uploadDate.getTime();
     if (sortBy === 'trending') return b.views - a.views;
     if (sortBy === 'top') return b.rating - a.rating;
@@ -66,7 +121,7 @@ export function BlogPortal() {
           )}
 
           {/* Filters */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 mb-4">
             <button
               onClick={() => setSortBy('latest')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${sortBy === 'latest'
@@ -97,6 +152,79 @@ export function BlogPortal() {
               <Award className="w-4 h-4" />
               Top Rated
             </button>
+
+            {/* Filter Button */}
+            <div ref={filterRef} className="relative ml-auto">
+              <button
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${(selectedCategory !== 'All' || selectedRating !== 'All')
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'
+                  }`}
+              >
+                <Filter className="w-4 h-4" />
+                Filter
+                <ChevronDown className={`w-4 h-4 transition-transform ${isFilterOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {/* Filter Dropdown */}
+              {isFilterOpen && (
+                <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border-2 border-gray-200 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                  {/* Category Filter */}
+                  <div className="p-4 border-b border-gray-200">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Filter by Type</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {categories.map((category) => (
+                        <button
+                          key={category}
+                          onClick={() => setSelectedCategory(category)}
+                          className={`px-3 py-1.5 rounded-lg text-sm transition-all ${selectedCategory === category
+                            ? 'bg-indigo-600 text-white shadow-md'
+                            : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'
+                            }`}
+                        >
+                          {category}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Rating Filter */}
+                  <div className="p-4">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Filter by Rating</h3>
+                    <div className="space-y-2">
+                      {['All', '5⭐', '4⭐ & above', '3⭐ & above'].map((rating) => (
+                        <button
+                          key={rating}
+                          onClick={() => setSelectedRating(rating)}
+                          className={`w-full px-3 py-2 rounded-lg text-sm text-left transition-all ${selectedRating === rating
+                            ? 'bg-indigo-600 text-white shadow-md'
+                            : 'bg-gray-100 text-gray-700 hover:bg-indigo-50'
+                            }`}
+                        >
+                          {rating}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Clear Filters Button */}
+                  {(selectedCategory !== 'All' || selectedRating !== 'All') && (
+                    <div className="p-3 bg-gray-50 border-t border-gray-200">
+                      <button
+                        onClick={() => {
+                          setSelectedCategory('All');
+                          setSelectedRating('All');
+                        }}
+                        className="w-full px-3 py-2 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-all text-sm font-medium"
+                      >
+                        Clear All Filters
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -185,7 +313,7 @@ export function BlogPortal() {
 
       {/* Leaderboard Sidebar */}
       <div className="lg:col-span-1">
-        <PortalLeaderboard portalType="blog" accentColor="orange" />
+        <PortalLeaderboard portalType="blog" />
       </div>
     </div>
   );
