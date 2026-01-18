@@ -10,7 +10,7 @@ import { canUpload } from '../utils/permissions';
 
 export function AudioPortal() {
   const { user } = useAuth();
-  const { posts } = usePosts();
+  const { posts, votePost } = usePosts();
   const [sortBy, setSortBy] = useState<'latest' | 'trending' | 'top'>('latest');
   const [showWarning, setShowWarning] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -47,6 +47,18 @@ export function AudioPortal() {
     if (sortBy === 'top') return b.rating - a.rating;
     return 0;
   });
+
+  const getImageUrl = (path?: string) => {
+    if (!path) return 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=800&auto=format&fit=crop';
+
+    // Check for audio/video files
+    if (path.match(/\.(mp3|wav|flac|aac|ogg|mp4|mov|avi|webm)$/i)) {
+      return 'https://images.unsplash.com/photo-1478737270239-2f52b27e9088?w=800&auto=format&fit=crop'; // Audio placeholder
+    }
+
+    if (path.startsWith('http')) return path;
+    return `http://localhost:8000/${path}`;
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -175,12 +187,16 @@ export function AudioPortal() {
                 {/* Thumbnail */}
                 <div className="relative">
                   <img
-                    src={audio.thumbnail}
+                    src={getImageUrl(audio.thumbnail)}
                     alt={audio.title}
                     className="w-full h-48 object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = 'https://images.unsplash.com/photo-1478737270239-2f52b27e9088?w=800&auto=format&fit=crop';
+                    }}
                   />
                   <div className="absolute bottom-2 right-2 bg-black/80 text-white px-2 py-1 rounded text-sm">
-                    {audio.duration}
+                    {audio.duration || '0:00'}
                   </div>
                 </div>
 
@@ -191,10 +207,17 @@ export function AudioPortal() {
 
                   {/* Meta */}
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 text-teal-600 fill-teal-600" />
-                      <span className="text-gray-700">{audio.rating}</span>
-                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        votePost(audio.id);
+                      }}
+                      className="flex items-center gap-1 group/vote hover:scale-110 transition-transform z-10 relative"
+                      title={audio.hasVoted ? "Unvote" : "Vote"}
+                    >
+                      <Star className={`w-4 h-4 transition-colors ${audio.hasVoted ? 'text-teal-600 fill-teal-600' : 'text-gray-400 group-hover/vote:text-teal-600'}`} />
+                      <span className={`text-sm font-medium ${audio.hasVoted ? 'text-teal-700' : 'text-gray-600'}`}>{audio.votes || 0}</span>
+                    </button>
                     <span className="text-gray-600">{audio.views.toLocaleString()} plays</span>
                   </div>
                 </div>
@@ -221,6 +244,6 @@ export function AudioPortal() {
       <div className="lg:col-span-1">
         <PortalLeaderboard portalType="audio" />
       </div>
-    </div>
+    </div >
   );
 }
