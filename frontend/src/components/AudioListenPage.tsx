@@ -2,17 +2,26 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Repeat, Shuffle, Heart, ChevronLeft } from 'lucide-react';
 import { usePosts } from '../contexts/PostContext';
-import type { Post } from '../types/auth';
+import { api } from '../services/api';
 
 export function AudioListenPage() {
     const { id } = useParams();
-    const { posts } = usePosts();
+    const { posts, updatePostViews } = usePosts();
 
     // Derive audio directly to avoid first-render null state
     const audio = useMemo(() => {
         if (!id || posts.length === 0) return null;
         return posts.find(p => String(p.id) === String(id)) || null;
     }, [id, posts]);
+
+    // Increment view count on mount
+    useEffect(() => {
+        if (id && audio) {
+            api.posts.incrementView(id).then(data => {
+                updatePostViews(id, data.views);
+            }).catch(console.error);
+        }
+    }, [id]);
 
     const audioRef = useRef<HTMLAudioElement>(null);
     const progressContainerRef = useRef<HTMLDivElement>(null);
@@ -201,22 +210,29 @@ export function AudioListenPage() {
     return (
         <div className="bg-[#0a0a0a] -mx-4 -mt-8 min-h-screen text-white flex flex-col items-center justify-center p-4 md:p-8">
             <div className="w-full max-w-5xl bg-gradient-to-br from-gray-900 via-gray-800 to-black rounded-3xl overflow-hidden shadow-2xl border border-white/5 p-6 md:p-12 relative">
-                <audio ref={audioRef} src={audio.thumbnail} />
+                {/* Hidden Audio Element */}
+                <audio ref={audioRef} src={!audio.thumbnail ? '' : (audio.thumbnail.startsWith('http') ? audio.thumbnail : `http://localhost:8000/${audio.thumbnail}`)} className="hidden" />
 
-                <div className="flex items-center mb-8">
+                <div className="flex items-center mb-8 relative z-20">
                     <Link to="/audio" className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors">
                         <ChevronLeft className="w-5 h-5" />
                         <span className="font-medium">Back to Portal</span>
                     </Link>
                 </div>
 
-                <div className="flex flex-col md:flex-row gap-8 items-center">
+                <div className="flex flex-col md:flex-row gap-8 items-center relative z-10">
                     <div className="relative group">
                         <div className="w-48 h-48 md:w-64 md:h-64 rounded-xl overflow-hidden shadow-2xl bg-[#e8e6e1] flex items-center justify-center">
                             <img
-                                src={audio.thumbnail}
+                                src={!audio.thumbnail || (audio.thumbnail.match(/\.(mp3|wav|flac|aac|ogg|mp4|mov|avi|webm)$/i) || !audio.thumbnail.match(/\.(jpg|jpeg|png|gif|webp)$/i))
+                                    ? 'https://images.unsplash.com/photo-1478737270239-2f52b27e9088?w=800&auto=format&fit=crop'
+                                    : (audio.thumbnail.startsWith('http') ? audio.thumbnail : `http://localhost:8000/${audio.thumbnail}`)}
                                 alt={audio.title}
                                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.src = 'https://images.unsplash.com/photo-1478737270239-2f52b27e9088?w=800&auto=format&fit=crop';
+                                }}
                             />
                         </div>
 
