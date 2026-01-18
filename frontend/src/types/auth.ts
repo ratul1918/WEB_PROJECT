@@ -32,6 +32,8 @@ export interface Post {
   type: 'video' | 'audio' | 'blog';
   thumbnail?: string;
   rating: number;
+  votes: number; // Dynamic from DB
+  hasVoted: boolean; // Computed for current user
   views: number;
   uploadDate: Date;
   status: 'pending' | 'approved' | 'rejected';
