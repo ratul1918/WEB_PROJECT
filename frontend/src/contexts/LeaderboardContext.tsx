@@ -1,5 +1,6 @@
-import { createContext, useContext, ReactNode } from 'react';
+import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { usePosts } from './PostContext';
+import { api } from '../services/api';
 
 export interface LeaderboardEntry {
     rank: number;
@@ -8,12 +9,16 @@ export interface LeaderboardEntry {
     avatar: string;
     rating: number;
     totalScore: number;
+    submissions: number;
+    userVotes: number;
+    hasVoted: boolean;
     portalType: 'video' | 'audio' | 'blog';
 }
 
 interface LeaderboardContextType {
     getLeaderboardByPortal: (portalType: 'video' | 'audio' | 'blog') => LeaderboardEntry[];
     getAllLeaderboard: () => LeaderboardEntry[];
+    voteUser: (userId: string) => Promise<void>;
 }
 
 const LeaderboardContext = createContext<LeaderboardContextType | null>(null);
@@ -32,6 +37,38 @@ interface LeaderboardProviderProps {
 
 export function LeaderboardProvider({ children }: LeaderboardProviderProps) {
     const { posts } = usePosts();
+    const [userVotes, setUserVotes] = useState<Record<string, number>>({});
+    const [myVotes, setMyVotes] = useState<Record<string, boolean>>({});
+
+    const fetchUserVotes = async () => {
+        try {
+            const data = await api.posts.getUserVotes();
+            setUserVotes(data.votes || {});
+            setMyVotes(data.my_votes || {});
+        } catch (error) {
+            console.error("Failed to fetch user votes", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchUserVotes();
+    }, []);
+
+    const voteUser = async (candidateId: string) => {
+        try {
+            const result = await api.posts.voteUser(candidateId);
+            setUserVotes(prev => ({
+                ...prev,
+                [candidateId]: result.votes
+            }));
+            setMyVotes(prev => ({
+                ...prev,
+                [candidateId]: result.has_voted
+            }));
+        } catch (error) {
+            console.error("Failed to vote for user", error);
+        }
+    };
 
     // Calculate leaderboard data from posts
     const calculateLeaderboard = (portalType?: 'video' | 'audio' | 'blog'): LeaderboardEntry[] => {
@@ -43,7 +80,7 @@ export function LeaderboardProvider({ children }: LeaderboardProviderProps) {
         // Group posts by author
         const authorStats = new Map<string, {
             username: string;
-            totalRating: number;
+            totalVotes: number;
             totalViews: number;
             postCount: number;
             portalType: 'video' | 'audio' | 'blog';
@@ -52,13 +89,14 @@ export function LeaderboardProvider({ children }: LeaderboardProviderProps) {
         filteredPosts.forEach(post => {
             const existing = authorStats.get(post.authorId);
             if (existing) {
-                existing.totalRating += post.rating;
+                // Ensure we use votes if available, defaulting to 0
+                existing.totalVotes += (post.votes || 0);
                 existing.totalViews += post.views;
                 existing.postCount += 1;
             } else {
                 authorStats.set(post.authorId, {
                     username: post.authorName,
-                    totalRating: post.rating,
+                    totalVotes: (post.votes || 0),
                     totalViews: post.views,
                     postCount: 1,
                     portalType: post.type,
@@ -68,8 +106,10 @@ export function LeaderboardProvider({ children }: LeaderboardProviderProps) {
 
         // Convert to leaderboard entries
         const entries: LeaderboardEntry[] = Array.from(authorStats.entries()).map(([userId, stats]) => {
-            const avgRating = stats.totalRating / stats.postCount;
-            const totalScore = Math.round(stats.totalViews + (avgRating * 1000));
+            // Formula: Total Score = Total Views + (Total Votes * 10)
+            const totalScore = Math.round(stats.totalViews + (stats.totalVotes * 10));
+            const votes = userVotes[userId] || 0;
+            const hasVoted = myVotes[userId] || false;
 
             // Generate avatar using UI Avatars API
             const avatarName = encodeURIComponent(stats.username);
@@ -79,14 +119,20 @@ export function LeaderboardProvider({ children }: LeaderboardProviderProps) {
                 userId,
                 username: stats.username,
                 avatar,
-                rating: Math.round(avgRating * 10) / 10,
+                rating: stats.totalVotes, // Display total votes as "Stars"
                 totalScore,
+                submissions: stats.postCount,
+                userVotes: votes,
+                hasVoted,
                 portalType: stats.portalType,
                 rank: 0, // Will be set after sorting
             };
         });
 
-        // Sort by total score and assign ranks
+        // Sort by total score AND user votes (giving weight to votes?)
+        // Let's keep totalScore as primary for now, maybe add votes to score?
+        // User asked to vote them "individually and overall". 
+        // Let's stick to total score for rank, but display votes.
         entries.sort((a, b) => b.totalScore - a.totalScore);
         entries.forEach((entry, index) => {
             entry.rank = index + 1;
@@ -107,6 +153,7 @@ export function LeaderboardProvider({ children }: LeaderboardProviderProps) {
         <LeaderboardContext.Provider value={{
             getLeaderboardByPortal,
             getAllLeaderboard,
+            voteUser
         }}>
             {children}
         </LeaderboardContext.Provider>
