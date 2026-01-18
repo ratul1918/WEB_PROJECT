@@ -5,11 +5,12 @@ import { UploadModal } from './UploadModal';
 import { InteractiveModal } from './InteractiveModal';
 import { useAuth } from '../contexts/AuthContext';
 import { usePosts } from '../contexts/PostContext';
+import { api } from '../services/api';
 import { canUpload } from '../utils/permissions';
 
 export function BlogPortal() {
   const { user } = useAuth();
-  const { posts } = usePosts();
+  const { posts, votePost, updatePostViews } = usePosts();
   const [sortBy, setSortBy] = useState<'latest' | 'trending' | 'top'>('latest');
   const [showWarning, setShowWarning] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -89,6 +90,12 @@ export function BlogPortal() {
     if (sortBy === 'top') return b.rating - a.rating;
     return 0;
   });
+
+  const getImageUrl = (path?: string) => {
+    if (!path) return 'https://images.unsplash.com/photo-1499750310159-5b5f8ca473aa?w=800&auto=format&fit=crop';
+    if (path.startsWith('http')) return path;
+    return `http://localhost:8000/${path}`;
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -263,13 +270,18 @@ export function BlogPortal() {
               href="https://www.lipsum.com/"
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => {
+                api.posts.incrementView(blog.id).then(data => {
+                  updatePostViews(blog.id, data.views);
+                }).catch(console.error);
+              }}
               className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all hover:scale-[1.01] cursor-pointer border-l-4 border-indigo-600 block"
             >
               <div className="md:flex">
                 {/* Thumbnail */}
                 <div className="md:w-64 md:flex-shrink-0">
                   <img
-                    src={blog.thumbnail}
+                    src={getImageUrl(blog.thumbnail)}
                     alt={blog.title}
                     className="w-full h-48 md:h-full object-cover"
                   />
@@ -284,10 +296,17 @@ export function BlogPortal() {
                   {/* Meta */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-1">
-                        <Star className="w-4 h-4 text-indigo-600 fill-indigo-600" />
-                        <span className="text-gray-700">{blog.rating}</span>
-                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          votePost(blog.id);
+                        }}
+                        className="flex items-center gap-1 group/vote hover:scale-110 transition-transform z-10 relative"
+                        title={blog.hasVoted ? "Unvote" : "Vote"}
+                      >
+                        <Star className={`w-4 h-4 transition-colors ${blog.hasVoted ? 'text-indigo-600 fill-indigo-600' : 'text-gray-400 group-hover/vote:text-indigo-600'}`} />
+                        <span className={`text-sm font-medium ${blog.hasVoted ? 'text-indigo-700' : 'text-gray-600'}`}>{blog.votes || 0}</span>
+                      </button>
                       <span className="text-gray-600">{blog.views.toLocaleString()} reads</span>
                       <span className="text-gray-600">{blog.readTime} read</span>
                     </div>
