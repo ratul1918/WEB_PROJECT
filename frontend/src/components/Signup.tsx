@@ -18,7 +18,7 @@ export function Signup() {
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -39,7 +39,7 @@ export function Signup() {
     }
 
     try {
-      signup(name, email, password, role, studentId);
+      await signup(name, email, password, role, studentId);
       navigate('/');
     } catch (err: any) {
       setError(err.message || 'Failed to create account. Please try again.');
