@@ -12,8 +12,9 @@ $host = "127.0.0.1";
 $user = "root";
 $password = "";
 $database = "uiu_talent_show";
+$socket = "/Applications/XAMPP/xamppfiles/var/mysql/mysql.sock";
 
-$conn = new mysqli($host, $user, $password, $database);
+$conn = new mysqli($host, $user, $password, $database, 3306, $socket);
 
 // Check connection
 if ($conn->connect_error) {
