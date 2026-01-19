@@ -1,5 +1,6 @@
 import { Heart, Github, Mail, Linkedin, Twitter } from 'lucide-react';
 import { motion } from 'motion/react';
+import { Link } from 'react-router-dom';
 
 export function Footer() {
   return (
@@ -32,29 +33,29 @@ export function Footer() {
             <h4 className="text-white mb-4">Quick Links</h4>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="text-gray-400 hover:text-orange-500 transition-colors">
+                <Link to="/about" className="text-gray-400 hover:text-orange-500 transition-colors">
                   About Us
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-gray-400 hover:text-orange-500 transition-colors">
+                <Link to="/video" className="text-gray-400 hover:text-orange-500 transition-colors">
                   Video Portal
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-gray-400 hover:text-orange-500 transition-colors">
+                <Link to="/audio" className="text-gray-400 hover:text-orange-500 transition-colors">
                   Audio Portal
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-gray-400 hover:text-orange-500 transition-colors">
+                <Link to="/blogs" className="text-gray-400 hover:text-orange-500 transition-colors">
                   Blog Portal
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-gray-400 hover:text-orange-500 transition-colors">
+                <Link to="/leaderboard" className="text-gray-400 hover:text-orange-500 transition-colors">
                   Leaderboard
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -79,7 +80,7 @@ export function Footer() {
                 </a>
               </li>
             </ul>
-            
+
             {/* Social Icons */}
             <div className="flex gap-3">
               <motion.a

@@ -15,6 +15,7 @@ import { Profile } from './components/Profile';
 import { Login } from './components/Login';
 import { Signup } from './components/Signup';
 import { Footer } from './components/Footer';
+import { AboutUs } from './components/AboutUs';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { PostProvider } from './contexts/PostContext';
 import { LeaderboardProvider } from './contexts/LeaderboardContext';
@@ -236,6 +237,17 @@ function AppContent() {
           <ProtectedRoute minimumRole="viewer">
             <MainLayout>
               <Profile />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/about"
+        element={
+          <ProtectedRoute minimumRole="viewer">
+            <MainLayout>
+              <AboutUs />
             </MainLayout>
           </ProtectedRoute>
         }
