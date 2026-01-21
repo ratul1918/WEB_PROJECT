@@ -17,6 +17,12 @@ $password = $data['password'];
 
 $result = $conn->query("SELECT * FROM users WHERE email='$email'");
 
+if (!$result) {
+    http_response_code(500);
+    echo json_encode(["error" => "Database query failed"]);
+    exit();
+}
+
 if ($result->num_rows === 0) {
     http_response_code(401);
     echo json_encode(["error" => "Invalid email or password"]);
