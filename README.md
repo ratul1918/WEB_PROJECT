@@ -80,9 +80,6 @@ WEB_PROJECT/
 - [Testing Guide](./TESTING_GUIDE.md)
 - [Project Documentation](./src/PROJECT_DOCUMENTATION.md)
 
-## 🎨 Design
-
-Original Figma design: https://www.figma.com/design/vvaqy8UxaqB1ndwcnLMZlR/UIU-Talent-Showcase-Dashboard
 
 ## 👨‍💻 Development Team
 
