@@ -18,7 +18,7 @@ WEB_PROJECT/
 │   └── vite.config.ts
 └── backend/           # Backend server (to be implemented)
 ``` 
-
+ 
 ## 🚀 Getting Started
 
 ### Frontend Setup
