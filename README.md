@@ -17,7 +17,7 @@ WEB_PROJECT/
 │   ├── package.json
 │   └── vite.config.ts
 └── backend/           # Backend server (to be implemented)
-```
+``` 
 
 ## 🚀 Getting Started
 
