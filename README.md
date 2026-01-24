@@ -9,7 +9,7 @@ WEB_PROJECT/
 ├── frontend/          # React frontend application
 │   ├── src/
 │   │   ├── components/    # React components
-│   │   ├── contexts/      # Context providers (Auth, Post)
+│   │   ├── contexts/      # Context providers (Auth, Post) 
 │   │   ├── types/         # TypeScript type definitions
 │   │   ├── utils/         # Utility functions
 │   │   └── styles/        # Global styles
