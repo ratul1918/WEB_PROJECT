@@ -2,6 +2,7 @@ import { usePosts } from '../contexts/PostContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Check, X, Clock, FileText, Video, Mic, AlertTriangle } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
+import { CreatorSearch } from './CreatorSearch';
 
 export function AdminDashboard() {
     const { user } = useAuth();
@@ -24,6 +25,10 @@ export function AdminDashboard() {
                 <div className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-4 py-2 rounded-lg font-medium">
                     {pendingPosts.length} Pending Requests
                 </div>
+            </div>
+
+            <div className="mb-8">
+                <CreatorSearch placeholder="Search viewers and creators" />
             </div>
 
             {pendingPosts.length === 0 ? (
