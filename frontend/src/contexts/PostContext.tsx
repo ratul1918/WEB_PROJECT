@@ -4,7 +4,7 @@ import { api } from '../services/api';
 
 interface PostContextType {
     posts: Post[];
-    addPost: (post: Omit<Post, 'id' | 'uploadDate' | 'status' | 'views' | 'rating' | 'votes' | 'hasVoted'> & { file: File }) => Promise<void>;
+    addPost: (post: Omit<Post, 'id' | 'uploadDate' | 'status' | 'views' | 'rating' | 'votes' | 'hasVoted' | 'thumbnail'> & { file: File; thumbnail?: File }) => Promise<void>;
     approvePost: (id: string) => void;
     rejectPost: (id: string) => void;
     deletePost: (id: string) => Promise<void>;
@@ -37,10 +37,15 @@ export function PostProvider({ children }: PostProviderProps) {
             // Map backend implementation to frontend Post type if needed, 
             // but current backend impl matches sufficiently or we can cast
             if (Array.isArray(fetchedPosts)) {
-                const mappedPosts = fetchedPosts.map((p: any) => ({
-                    ...p,
-                    uploadDate: new Date(p.uploadDate),
-                }));
+                const mappedPosts = fetchedPosts.map((p: any) => {
+                    const voteScore = (p.voteScore !== undefined ? p.voteScore : (p.votes || 0) * 10);
+                    return {
+                        ...p,
+                        uploadDate: new Date(p.uploadDate),
+                        rating: p.votes ?? 0, // rating shown on cards = likes
+                        voteScore,
+                    };
+                });
                 setPosts(mappedPosts);
             } else {
                 console.error("fetchPosts received non-array:", fetchedPosts);
@@ -56,7 +61,7 @@ export function PostProvider({ children }: PostProviderProps) {
         fetchPosts();
     }, []);
 
-    const addPost = async (newPostData: Omit<Post, 'id' | 'uploadDate' | 'status' | 'views' | 'rating' | 'votes' | 'hasVoted'> & { file: File }) => {
+    const addPost = async (newPostData: Omit<Post, 'id' | 'uploadDate' | 'status' | 'views' | 'rating' | 'votes' | 'hasVoted' | 'thumbnail'> & { file: File; thumbnail?: File }) => {
         try {
             const formData = new FormData();
             formData.append('title', newPostData.title);
@@ -64,6 +69,15 @@ export function PostProvider({ children }: PostProviderProps) {
             formData.append('type', newPostData.type);
             formData.append('duration', newPostData.duration || '');
             formData.append('file', newPostData.file);
+
+            if (newPostData.category) {
+                formData.append('category', newPostData.category);
+            }
+
+            // Append thumbnail if provided (required for video/audio)
+            if (newPostData.thumbnail) {
+                formData.append('thumbnail', newPostData.thumbnail);
+            }
 
             await api.posts.create(formData);
             await fetchPosts(); // Refresh list
@@ -98,7 +112,7 @@ export function PostProvider({ children }: PostProviderProps) {
     const deletePost = async (id: string) => {
         try {
             await api.posts.delete(id);
-            setPosts(prev => prev.filter(post => post.id !== id));
+            setPosts(prev => prev.filter(post => String(post.id) !== String(id)));
         } catch (error) {
             console.error("Error deleting post", error);
             throw error;
@@ -110,10 +124,15 @@ export function PostProvider({ children }: PostProviderProps) {
             const result = await api.posts.vote(id);
             setPosts(prev => prev.map(post => {
                 if (post.id === id) {
+                    const votes = (result.likes !== undefined ? result.likes : result.votes ?? post.votes ?? 0);
+                    const liked = result.liked !== undefined ? result.liked : (result.action === 'voted');
+                    const voteScore = votes * 10;
                     return {
                         ...post,
-                        votes: result.votes, // Use server returned count
-                        hasVoted: result.action === 'voted'
+                        votes,
+                        voteScore,
+                        rating: votes,
+                        hasVoted: liked,
                     };
                 }
                 return post;
