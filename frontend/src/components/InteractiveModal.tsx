@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Camera, Mic, PenTool, CheckCircle2, AlertCircle } from 'lucide-react';
+import { X, Camera, Mic, PenTool, CheckCircle2, AlertCircle, Image, Upload } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { usePosts } from '../contexts/PostContext';
 
 interface InteractiveModalProps {
     isOpen: boolean;
@@ -8,15 +10,31 @@ interface InteractiveModalProps {
 }
 
 export function InteractiveModal({ isOpen, onClose, type }: InteractiveModalProps) {
+    const { user } = useAuth();
+    const { addPost } = usePosts();
     const [stream, setStream] = useState<MediaStream | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [blogContent, setBlogContent] = useState('');
+    const [blogTitle, setBlogTitle] = useState(''); // Added Title State
+    const [blogHeaderImage, setBlogHeaderImage] = useState<File | null>(null); // Blog header image
+    const [headerPreview, setHeaderPreview] = useState<string | null>(null); // Header image preview
+    const [isSubmitting, setIsSubmitting] = useState(false); // Added Submitting State
+    const [success, setSuccess] = useState(false); // Added Success State
+    const [category, setCategory] = useState('General');
+    const categories = ['Tech', 'Education', 'Motivation', 'Lifestyle', 'News', 'Poems', 'Story Writing', 'General'];
     const videoRef = useRef<HTMLVideoElement>(null);
     const activeStreamRef = useRef<MediaStream | null>(null);
 
     useEffect(() => {
         if (!isOpen) {
             stopMedia();
+            setBlogContent('');
+            setBlogTitle('');
+            setBlogHeaderImage(null);
+            setHeaderPreview(null);
+            setError(null);
+            setIsSubmitting(false);
+            setSuccess(false);
             return;
         }
 
@@ -89,11 +107,52 @@ export function InteractiveModal({ isOpen, onClose, type }: InteractiveModalProp
         onClose();
     };
 
+    const handlePublish = async () => {
+        if (type !== 'blog' || !user) return;
+        if (!blogTitle.trim() || !blogContent.trim()) {
+            setError('Please provide both a title and content for your blog.');
+            return;
+        }
+
+        setIsSubmitting(true);
+        setError(null);
+
+        try {
+            // Create a text file from the content
+            const blob = new Blob([blogContent], { type: 'text/plain' });
+            const file = new File([blob], `${blogTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.txt`, { type: 'text/plain' });
+
+            await addPost({
+                title: blogTitle,
+                authorId: user.id,
+                authorName: user.name,
+                authorRole: user.role,
+                type: 'blog',
+                description: blogContent, // Use full content as description
+                duration: '0:00',
+                file: file,
+                thumbnail: blogHeaderImage || undefined, // Pass header image as thumbnail
+                category: category, // Add category here
+            });
+
+            setSuccess(true);
+            setTimeout(() => {
+                onClose();
+            }, 2000);
+
+        } catch (err: any) {
+            console.error('[InteractiveModal] Failed to publish blog:', err);
+            setError(err.message || 'Failed to publish blog. Please try again.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <div className="bg-white dark:bg-zinc-900 w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="bg-white dark:bg-zinc-900 w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200" onClick={e => e.stopPropagation()}>
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between bg-zinc-50 dark:bg-zinc-900/50">
                     <div className="flex items-center gap-3">
@@ -128,22 +187,39 @@ export function InteractiveModal({ isOpen, onClose, type }: InteractiveModalProp
 
                 {/* Content */}
                 <div className="p-8">
-                    {error ? (
-                        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-2xl p-6 text-center">
-                            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-                            <h3 className="text-lg font-bold text-red-900 dark:text-red-400 mb-2">Access Error</h3>
-                            <p className="text-red-700 dark:text-red-300 mb-4">{error}</p>
-                            <button
-                                onClick={startMedia}
-                                className="px-6 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors"
-                            >
-                                Retry Access
-                            </button>
+                    {success ? (
+                        <div className="text-center py-8 animate-in fade-in zoom-in">
+                            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
+                            </div>
+                            <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">Submitted for Approval!</h3>
+                            <p className="text-zinc-500 dark:text-zinc-400">
+                                Your blog has been sent to the admin for review.
+                            </p>
                         </div>
                     ) : (
                         <div className="space-y-6">
+                            {/* Error Display */}
+                            {error && (
+                                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-2xl p-4 text-center">
+                                    <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-2" />
+                                    <p className="text-red-700 dark:text-red-300 text-sm">{error}</p>
+                                    {error.includes('access') && (
+                                        <button
+                                            onClick={startMedia}
+                                            className="mt-2 text-sm text-red-600 underline hover:text-red-800"
+                                        >
+                                            Retry Access
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+
                             {type === 'video' && (
-                                <div className="relative aspect-video bg-black rounded-2xl overflow-hidden shadow-inner ring-1 ring-black/5">
+                                <div
+                                    className="relative bg-black rounded-2xl overflow-hidden shadow-inner ring-1 ring-black/5"
+                                    style={{ aspectRatio: '16 / 9' }}
+                                >
                                     <video
                                         ref={videoRef}
                                         autoPlay
@@ -213,19 +289,97 @@ export function InteractiveModal({ isOpen, onClose, type }: InteractiveModalProp
 
                             {type === 'blog' && (
                                 <div className="space-y-4">
+                                    {/* Header Image Upload */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            Header Image (Optional)
+                                        </label>
+                                        {headerPreview ? (
+                                            <div className="relative rounded-xl overflow-hidden group">
+                                                <img 
+                                                    src={headerPreview} 
+                                                    alt="Header preview" 
+                                                    className="w-full h-48 object-cover"
+                                                />
+                                                <button
+                                                    onClick={() => {
+                                                        setBlogHeaderImage(null);
+                                                        setHeaderPreview(null);
+                                                    }}
+                                                    className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 dark:border-zinc-700 rounded-xl cursor-pointer bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors">
+                                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                                    <Upload className="w-8 h-8 mb-2 text-gray-400" />
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                        <span className="font-semibold">Click to upload</span> header image
+                                                    </p>
+                                                    <p className="text-xs text-gray-400 dark:text-gray-500">PNG, JPG up to 10MB</p>
+                                                </div>
+                                                <input
+                                                    type="file"
+                                                    className="hidden"
+                                                    accept="image/*"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (file) {
+                                                            if (file.size > 10 * 1024 * 1024) {
+                                                                setError('Header image must be less than 10MB');
+                                                                return;
+                                                            }
+                                                            setBlogHeaderImage(file);
+                                                            setHeaderPreview(URL.createObjectURL(file));
+                                                            setError(null);
+                                                        }
+                                                    }}
+                                                />
+                                            </label>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <input
+                                            type="text"
+                                            placeholder="Enter your blog title..."
+                                            className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 rounded-xl border-none focus:ring-2 focus:ring-indigo-600 dark:text-white dark:placeholder-gray-500 text-xl font-bold placeholder:font-normal"
+                                            value={blogTitle}
+                                            onChange={(e) => setBlogTitle(e.target.value)}
+                                            autoFocus
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            Category
+                                        </label>
+                                        <select
+                                            value={category}
+                                            onChange={(e) => setCategory(e.target.value)}
+                                            className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 rounded-xl border-none focus:ring-2 focus:ring-indigo-600 dark:text-white outline-none transition-all"
+                                        >
+                                            {categories.map((cat) => (
+                                                <option key={cat} value={cat}>
+                                                    {cat}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
                                     <textarea
-                                        autoFocus
                                         placeholder="Start typing your story here..."
-                                        className="w-full h-64 p-6 bg-gray-50 dark:bg-zinc-800 rounded-2xl border-none focus:ring-2 focus:ring-indigo-600 dark:text-white dark:placeholder-gray-500 text-lg resize-none"
+                                        className="w-full h-64 p-6 bg-gray-50 dark:bg-zinc-800 rounded-2xl border-none focus:ring-2 focus:ring-indigo-600 dark:text-white dark:placeholder-gray-500 text-lg resize-none leading-relaxed"
                                         value={blogContent}
                                         onChange={(e) => setBlogContent(e.target.value)}
                                     />
                                     <div className="flex justify-between items-center text-sm text-gray-500">
                                         <span>{blogContent.length} characters</span>
-                                        <span className="flex items-center gap-1">
-                                            <CheckCircle2 className="w-4 h-4 text-green-500" />
-                                            Auto-saved
-                                        </span>
+                                        {blogContent.length > 5 && (
+                                            <span className="flex items-center gap-1">
+                                                <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                                Auto-saved
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             )}
@@ -233,26 +387,31 @@ export function InteractiveModal({ isOpen, onClose, type }: InteractiveModalProp
                     )}
                 </div>
 
-                {/* Footer */}
-                <div className="px-8 py-4 bg-zinc-50 dark:bg-zinc-900/50 border-t border-gray-100 dark:border-zinc-800 flex justify-end gap-3">
-                    <button
-                        onClick={handleClose}
-                        className="px-6 py-1.5 text-gray-600 dark:text-gray-400 font-medium hover:text-gray-900 dark:hover:text-white transition-colors"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        disabled={!stream && type !== 'blog' || (type === 'blog' && !blogContent.trim())}
-                        className={`px-6 py-1.5 font-bold transition-all transform rounded-lg active:scale-90 disabled:opacity-50 disabled:cursor-not-allowed ${type === 'video' ? 'text-orange-600 hover:bg-orange-50' :
-                            type === 'audio' ? 'text-teal-600 hover:bg-teal-50' :
-                                'text-indigo-600 hover:bg-indigo-50'
-                            }`}
-                    >
-                        {type === 'video' ? 'Start Streaming' :
-                            type === 'audio' ? 'Start Recording' :
-                                'Publish Blog'}
-                    </button>
-                </div>
+                {/* Footer - Only show if not success */}
+                {!success && (
+                    <div className="px-8 py-4 bg-zinc-50 dark:bg-zinc-900/50 border-t border-gray-100 dark:border-zinc-800 flex justify-end gap-3">
+                        <button
+                            onClick={handleClose}
+                            disabled={isSubmitting}
+                            className="px-6 py-1.5 text-gray-600 dark:text-gray-400 font-medium hover:text-gray-900 dark:hover:text-white transition-colors disabled:opacity-50"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={type === 'blog' ? handlePublish : undefined}
+                            disabled={(!stream && type !== 'blog') || (type === 'blog' && (!blogContent.trim() || !blogTitle.trim())) || isSubmitting}
+                            className={`px-6 py-1.5 font-bold transition-all transform rounded-lg active:scale-90 disabled:opacity-50 disabled:cursor-not-allowed ${type === 'video' ? 'text-orange-600 hover:bg-orange-50' :
+                                type === 'audio' ? 'text-teal-600 hover:bg-teal-50' :
+                                    'text-indigo-600 hover:bg-indigo-50'
+                                }`}
+                        >
+                            {isSubmitting ? 'Publishing...' :
+                                type === 'video' ? 'Start Streaming' :
+                                    type === 'audio' ? 'Start Recording' :
+                                        'Publish Blog'}
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );
