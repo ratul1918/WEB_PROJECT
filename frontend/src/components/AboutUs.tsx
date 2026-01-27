@@ -1,139 +1,115 @@
 import { motion } from 'framer-motion';
-import { Globe, Users, Sparkles, Award } from 'lucide-react';
+import { Heart, Code, Globe, Users, Sparkles } from 'lucide-react';
 
 export function AboutUs() {
-  const stats = [
-    { label: 'Active Students', value: '5,000+', icon: Users },
-    { label: 'Countries Reached', value: '20+', icon: Globe },
-    { label: 'Talents showcased', value: '10K+', icon: Sparkles },
-    { label: 'Awards Won', value: '50+', icon: Award },
-  ];
-
-  return (
-    <div className="max-w-7xl mx-auto px-4 py-16">
-      {/* Hero Section */}
-      <motion.div
-        className="text-center mb-32"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-      >
-        <motion.span
-          className="inline-block px-8 py-3 bg-gradient-to-r from-orange-100 to-orange-50 text-orange-600 rounded-full text-base font-bold tracking-widest mb-10 border border-orange-200"
-          whileHover={{ scale: 1.05 }}
-        >
-          OUR STORY
-        </motion.span>
-        <h1 className="text-7xl md:text-8xl font-black mb-10 tracking-tight leading-tight">
-          <span className="text-gray-900">
-            Empowering UIU's
-          </span>
-          <br />
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-red-600">
-            Creative Minds
-          </span>
-        </h1>
-        <p className="text-3xl text-gray-500 max-w-4xl mx-auto leading-relaxed font-light">
-          We believe every student has a unique talent waiting to be shared. The <span className="text-orange-600 font-medium">UIU Talent Showcase</span> is the digital stage where creativity meets opportunity.
-        </p>
-      </motion.div>
-
-      {/* Mission Section (Clean Text Layout) */}
-      <div className="max-w-5xl mx-auto mb-40 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-          className="relative"
-        >
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-r from-orange-50 to-purple-50 rounded-full opacity-50 blur-3xl -z-10" />
-
-          <h2 className="text-5xl md:text-6xl font-black text-gray-900 mb-12 leading-tight">
-            Bridging the Gap Between <br />
-            <span className="text-orange-600">Talent & Recognition</span>
-          </h2>
-
-          <div className="space-y-8 text-2xl text-gray-600 leading-relaxed font-light">
-            <p>
-              Founded with a clear vision, our platform serves as a digital auditorium for the diverse skills found at UIU. We are more than just a showcase; we are a community.
-            </p>
-            <p>
-              Whether it's filmmaking, music production, or creative writing, we provide the tools and space for students to shine, connect, and grow together in an environment that fosters innovation.
-            </p>
-          </div>
-
-          <div className="mt-16 inline-flex items-center gap-5 text-orange-600 font-bold text-xl bg-white px-8 py-4 rounded-full shadow-lg border border-orange-100">
-            <div className="p-2 bg-orange-100 rounded-full">
-              <Sparkles className="w-8 h-8 text-orange-600" />
-            </div>
-            <span>Built for Excellence at UIU</span>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Stats Section */}
-      <motion.div
-        className="bg-black rounded-[3rem] p-20 mb-40 text-white relative overflow-hidden"
-        initial={{ opacity: 0, scale: 0.95 }}
-        whileInView={{ opacity: 1, scale: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8 }}
-      >
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-gray-900 to-black z-0" />
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-orange-600 rounded-full opacity-20 blur-[120px] transform translate-x-1/2 -translate-y-1/2" />
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-600 rounded-full opacity-20 blur-[120px] transform -translate-x-1/2 translate-y-1/2" />
-
-        <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-16">
-          {stats.map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <div key={index} className="text-center group">
-                <div className="inline-flex items-center justify-center w-20 h-20 bg-white/5 rounded-3xl mb-8 text-orange-500 group-hover:scale-110 group-hover:bg-orange-600 group-hover:text-white transition-all duration-300 shadow-2xl">
-                  <Icon className="w-10 h-10" />
+    return (
+        <div className="min-h-screen pt-20 pb-20 bg-gradient-to-br from-orange-50 via-white to-purple-50">
+            <div className="container mx-auto px-4 max-w-7xl">
+                {/* Hero Section */}
+                <div className="text-center mb-16">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6 }}
+                    >
+                        <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-purple-600 mb-6">
+                            The Heart of UIU
+                        </h1>
+                        <p className="text-xl md:text-2xl text-gray-700 max-w-4xl mx-auto leading-relaxed px-4">
+                            We are a passionate community dedicated to showcasing the brilliance, creativity, and immense talent of United International University students.
+                        </p>
+                    </motion.div>
                 </div>
-                <div className="text-6xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-400">{stat.value}</div>
-                <div className="text-gray-400 font-bold tracking-widest uppercase text-sm">{stat.label}</div>
-              </div>
-            );
-          })}
-        </div>
-      </motion.div>
 
-      {/* LionHeart Team Section */}
-      <motion.div
-        className="relative"
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-      >
-        <div className="bg-white rounded-[3rem] p-16 md:p-24 text-center border-2 border-orange-50 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-orange-500 via-red-500 to-purple-500" />
+                {/* Mission Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-10 lg:gap-12 items-center mb-32">
+                    <motion.div
+                        initial={{ opacity: 0, x: -50 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        className="relative order-2 lg:order-1 lg:col-span-2 mx-auto w-full max-w-md lg:max-w-none"
+                    >
+                        <div className="absolute -inset-2 bg-gradient-to-r from-orange-200 to-purple-200 rounded-3xl blur-2xl opacity-30"></div>
+                        <img
+                            src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=80"
+                            alt="Team Collaboration"
+                            className="relative rounded-2xl shadow-2xl w-full h-auto object-cover"
+                        />
+                    </motion.div>
+                    <motion.div
+                        initial={{ opacity: 0, x: 50 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        className="space-y-8 order-1 lg:order-2 lg:col-span-3"
+                    >
+                        <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-orange-100 text-orange-700 rounded-full font-bold text-base">
+                            <Sparkles className="w-5 h-5" />
+                            <span>Our Mission</span>
+                        </div>
+                        <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">Empowering Student Creativity</h2>
+                        <p className="text-lg md:text-xl text-gray-700 leading-relaxed">
+                            The <span className="font-bold text-orange-600">UIU Talent Showcase</span> isn't just a platform; it's a stage. We believe every student has a unique voice, whether through cinema, melody, or prose.
+                        </p>
+                        <div className="space-y-6 pt-6">
+                            {[
+                                { icon: Code, text: "Built for students, by students" },
+                                { icon: Globe, text: "Showcasing UIU to the world" },
+                                { icon: Users, text: "Fostering a creative community" }
+                            ].map((item, idx) => (
+                                <div key={idx} className="flex items-center gap-4 p-4 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+                                    <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600 flex-shrink-0">
+                                        <item.icon className="w-6 h-6" />
+                                    </div>
+                                    <span className="font-semibold text-gray-900 text-lg md:text-xl">{item.text}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </motion.div>
+                </div>
 
-          <div className="relative z-10 max-w-5xl mx-auto">
-            <div className="w-24 h-24 bg-gradient-to-br from-orange-500 to-red-600 rounded-3xl flex items-center justify-center mx-auto mb-10 shadow-xl transform -rotate-6 hover:rotate-0 transition-transform duration-500">
-              <Award className="w-12 h-12 text-white" />
+                {/* Team Section (LionHeart) */}
+                <div className="bg-white rounded-3xl shadow-2xl border border-gray-200 p-8 md:p-12 lg:p-16 text-center relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-orange-500 via-purple-500 to-indigo-500"></div>
+
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        whileInView={{ opacity: 1, scale: 1 }}
+                        viewport={{ once: true }}
+                        className="relative z-10"
+                    >
+                        <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl mx-auto flex items-center justify-center mb-6 md:mb-8 shadow-2xl">
+                            <Heart className="w-8 h-8 md:w-10 md:h-10 text-white fill-white animate-pulse" />
+                        </div>
+
+                        <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-gray-900 mb-6 md:mb-8">
+                            Developed by <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600">LionHeart</span>
+                        </h2>
+
+                        <p className="text-lg md:text-xl lg:text-2xl text-gray-700 max-w-4xl mx-auto mb-10 md:mb-14 px-4 leading-relaxed">
+                            We are a team of visionary developers from United International University. Driven by passion and code, we craft digital experiences that matter.
+                        </p>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 md:gap-10 max-w-6xl mx-auto px-4">
+                            <div className="p-6 bg-gradient-to-br from-orange-50 to-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                                <div className="font-bold text-gray-900 text-2xl md:text-3xl mb-3">Innovation</div>
+                                <div className="text-base md:text-lg text-gray-600 leading-relaxed">Pushing boundaries</div>
+                            </div>
+                            <div className="p-6 bg-gradient-to-br from-purple-50 to-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                                <div className="font-bold text-gray-900 text-2xl md:text-3xl mb-3">Passion</div>
+                                <div className="text-base md:text-lg text-gray-600 leading-relaxed">Code with heart</div>
+                            </div>
+                            <div className="p-6 bg-gradient-to-br from-indigo-50 to-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                                <div className="font-bold text-gray-900 text-2xl md:text-3xl mb-3">Excellence</div>
+                                <div className="text-base md:text-lg text-gray-600 leading-relaxed">Quality first</div>
+                            </div>
+                        </div>
+                    </motion.div>
+
+                    {/* Background Decorative Pattern */}
+                    <div className="absolute -top-24 -right-24 w-64 h-64 md:w-80 md:h-80 bg-orange-100 rounded-full blur-3xl opacity-20 pointer-events-none"></div>
+                    <div className="absolute -bottom-24 -left-24 w-64 h-64 md:w-80 md:h-80 bg-purple-100 rounded-full blur-3xl opacity-20 pointer-events-none"></div>
+                </div>
             </div>
-
-            <h2 className="text-5xl md:text-7xl font-black text-gray-900 mb-10 tracking-tight">
-              Developed by <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600">LionHeart Team</span>
-            </h2>
-
-            <p className="text-2xl text-gray-500 leading-relaxed mb-12 font-light max-w-4xl mx-auto">
-              We are a group of passionate developers, designers, and dreamers from UIU.
-              United by a single goal: to create the ultimate platform for our peers to showcase their brilliance.
-            </p>
-
-            <div className="flex flex-wrap justify-center gap-6">
-              {['🚀 Innovation First', '🎨 Design Driven', '🤝 Community Focused'].map((tag, i) => (
-                <span key={i} className="px-8 py-4 bg-gray-50 rounded-2xl text-gray-700 font-bold text-lg shadow-sm border border-gray-100 hover:bg-white hover:shadow-md transition-all">
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </div>
         </div>
-      </motion.div>
-    </div>
-  );
+    );
 }
