@@ -32,42 +32,72 @@ if (!$user_data) {
     exit();
 }
 
-$user_id = $user_data['user_id'];
+$user_id = intval($user_data['user_id']);
+$user_role = $user_data['role'] ?? 'viewer';
 
-// Check if vote exists
+// Role check: only viewer or admin can vote
+if (!in_array($user_role, ['viewer', 'admin'], true)) {
+    http_response_code(403);
+    echo json_encode(["error" => "Only viewers or admins can vote"]);
+    exit();
+}
+
+// Ensure post exists and fetch creator
+$postSql = "SELECT user_id FROM posts WHERE id = $post_id LIMIT 1";
+$postResult = $conn->query($postSql);
+if (!$postResult || $postResult->num_rows === 0) {
+    http_response_code(404);
+    echo json_encode(["error" => "Post not found"]);
+    exit();
+}
+$postRow = $postResult->fetch_assoc();
+$post_owner_id = intval($postRow['user_id']);
+
+// Prevent creator voting on own post
+if ($post_owner_id === $user_id) {
+    http_response_code(403);
+    echo json_encode(["error" => "Creators cannot vote on their own posts"]);
+    exit();
+}
+
+// Toggle like
 $checkSql = "SELECT id FROM votes WHERE user_id = $user_id AND post_id = $post_id";
 $checkResult = $conn->query($checkSql);
 
-if ($checkResult->num_rows > 0) {
-    // Unlike (delete vote)
+$liked = false;
+
+if ($checkResult && $checkResult->num_rows > 0) {
+    // Unlike
     $deleteSql = "DELETE FROM votes WHERE user_id = $user_id AND post_id = $post_id";
-    if ($conn->query($deleteSql) === TRUE) {
-        $action = "unvoted";
-    } else {
+    if ($conn->query($deleteSql) !== TRUE) {
         http_response_code(500);
-        echo json_encode(["error" => "Error removing vote"]);
+        echo json_encode(["error" => "Error removing like"]);
         exit();
     }
+    $liked = false;
 } else {
-    // Like (insert vote)
-    $insertSql = "INSERT INTO votes (user_id, post_id) VALUES ('$user_id', '$post_id')";
-    if ($conn->query($insertSql) === TRUE) {
-        $action = "voted";
-    } else {
+    // Like
+    $insertSql = "INSERT INTO votes (user_id, post_id) VALUES ($user_id, $post_id)";
+    if ($conn->query($insertSql) !== TRUE) {
         http_response_code(500);
-        echo json_encode(["error" => "Error adding vote"]);
+        echo json_encode(["error" => "Error adding like"]);
         exit();
     }
+    $liked = true;
 }
 
-// Get new vote count
+// Get new like count
 $countSql = "SELECT COUNT(*) as vote_count FROM votes WHERE post_id = $post_id";
 $countResult = $conn->query($countSql);
 $count = 0;
-if ($countResult->num_rows > 0) {
+if ($countResult && $countResult->num_rows > 0) {
     $row = $countResult->fetch_assoc();
     $count = intval($row['vote_count']);
 }
 
-echo json_encode(["message" => "Success", "action" => $action, "votes" => $count]);
+echo json_encode([
+    "message" => "Success",
+    "liked" => $liked,
+    "likes" => $count
+]);
 ?>
