@@ -71,3 +71,4 @@ class JWT {
         return null;
     }
 }
+?>
