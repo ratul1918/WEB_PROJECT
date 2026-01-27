@@ -56,17 +56,24 @@ export function LeaderboardProvider({ children }: LeaderboardProviderProps) {
 
     const voteUser = async (candidateId: string) => {
         try {
+            console.log("🔵 voteUser called with candidateId:", candidateId);
             const result = await api.posts.voteUser(candidateId);
-            setUserVotes(prev => ({
-                ...prev,
-                [candidateId]: result.votes
-            }));
-            setMyVotes(prev => ({
-                ...prev,
-                [candidateId]: result.has_voted
-            }));
+            console.log("🟢 API response:", result);
+            if (result) {
+                const likeCount = result.votes ?? 0;
+                const isLiked = result.has_voted ?? (result.action === 'voted' ? true : false);
+                console.log("📊 Updating state - likeCount:", likeCount, "isLiked:", isLiked);
+                setUserVotes(prev => ({
+                    ...prev,
+                    [candidateId]: likeCount
+                }));
+                setMyVotes(prev => ({
+                    ...prev,
+                    [candidateId]: isLiked
+                }));
+            }
         } catch (error) {
-            console.error("Failed to vote for user", error);
+            console.error("❌ Failed to vote for user", error);
         }
     };
 
@@ -106,8 +113,8 @@ export function LeaderboardProvider({ children }: LeaderboardProviderProps) {
 
         // Convert to leaderboard entries
         const entries: LeaderboardEntry[] = Array.from(authorStats.entries()).map(([userId, stats]) => {
-            // Formula: Total Score = Total Views + (Total Votes * 10)
-            const totalScore = Math.round(stats.totalViews + (stats.totalVotes * 10));
+            // Formula: Total Score = (Total Votes * 10) only. If votes = 0, score = 0
+            const totalScore = (stats.totalVotes || 0) * 10;
             const votes = userVotes[userId] || 0;
             const hasVoted = myVotes[userId] || false;
 
@@ -119,8 +126,8 @@ export function LeaderboardProvider({ children }: LeaderboardProviderProps) {
                 userId,
                 username: stats.username,
                 avatar,
-                rating: stats.totalVotes, // Display total votes as "Stars"
-                totalScore,
+                rating: stats.totalVotes, // likes count
+                totalScore, // score derived from likes*10 + views
                 submissions: stats.postCount,
                 userVotes: votes,
                 hasVoted,
@@ -149,10 +156,21 @@ export function LeaderboardProvider({ children }: LeaderboardProviderProps) {
         return calculateLeaderboard();
     };
 
+    // Force recalculation when posts or userVotes change
+    const allLeaderboard = getAllLeaderboard();
+    const videoLeaderboard = getLeaderboardByPortal('video');
+    const audioLeaderboard = getLeaderboardByPortal('audio');
+    const blogLeaderboard = getLeaderboardByPortal('blog');
+
     return (
         <LeaderboardContext.Provider value={{
-            getLeaderboardByPortal,
-            getAllLeaderboard,
+            getLeaderboardByPortal: (type) => {
+                if (type === 'video') return videoLeaderboard;
+                if (type === 'audio') return audioLeaderboard;
+                if (type === 'blog') return blogLeaderboard;
+                return allLeaderboard;
+            },
+            getAllLeaderboard: () => allLeaderboard,
             voteUser
         }}>
             {children}
