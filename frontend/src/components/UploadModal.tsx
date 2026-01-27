@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Upload, Check, AlertCircle, FileText, Video, Mic } from 'lucide-react';
+import { X, Upload, Check, AlertCircle, FileText, Video, Mic, Image } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { usePosts } from '../contexts/PostContext';
 
@@ -17,9 +17,15 @@ export function UploadModal({ isOpen, onClose, initialType = 'video' }: UploadMo
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [file, setFile] = useState<File | null>(null);
+    const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+    const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
     const [duration, setDuration] = useState('');
     const [type, setType] = useState(initialType);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [termsAccepted, setTermsAccepted] = useState(false);
+    const [category, setCategory] = useState('General');
+
+    const categories = ['Tech', 'Education', 'Motivation', 'Lifestyle', 'News', 'Poems', 'Story Writing', 'General'];
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -65,6 +71,13 @@ export function UploadModal({ isOpen, onClose, initialType = 'video' }: UploadMo
 
     const s = themeStyles[type];
 
+    // File size limits (in MB)
+    const fileSizeLimits = {
+        video: 500, // 500 MB
+        audio: 100, // 100 MB
+        blog: 50    // 50 MB
+    };
+
     // Reset form when modal opens
     useEffect(() => {
         if (isOpen) {
@@ -73,8 +86,11 @@ export function UploadModal({ isOpen, onClose, initialType = 'video' }: UploadMo
             setDescription('');
             setDuration('');
             setFile(null);
+            setThumbnailFile(null);
+            setThumbnailPreview(null);
             setSuccess(false);
             setIsSubmitting(false);
+            setError(null);
         }
     }, [isOpen, initialType]);
 
@@ -85,6 +101,12 @@ export function UploadModal({ isOpen, onClose, initialType = 'video' }: UploadMo
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user || !file) return;
+
+        // Validate thumbnail is required for video/audio
+        if ((type === 'video' || type === 'audio') && !thumbnailFile) {
+            setError('Thumbnail image is required for video and audio uploads.');
+            return;
+        }
 
         setIsSubmitting(true);
         setError(null);
@@ -98,7 +120,8 @@ export function UploadModal({ isOpen, onClose, initialType = 'video' }: UploadMo
                 type,
                 description,
                 duration,
-                file: file
+                file: file,
+                thumbnail: thumbnailFile || undefined
             });
 
             setIsSubmitting(false);
@@ -112,6 +135,86 @@ export function UploadModal({ isOpen, onClose, initialType = 'video' }: UploadMo
             console.error("Failed to upload", error);
             setIsSubmitting(false);
             setError(error.message || "Failed to upload post. Please try again.");
+        }
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFile = e.target.files ? e.target.files[0] : null;
+
+        // Validate file size
+        if (selectedFile) {
+            const maxSize = fileSizeLimits[type] * 1024 * 1024; // Convert to bytes
+            if (selectedFile.size > maxSize) {
+                setError(`File size exceeds ${fileSizeLimits[type]} MB limit for ${type} files. Your file is ${(selectedFile.size / (1024 * 1024)).toFixed(2)} MB.`);
+                e.target.value = ''; // Clear the file input
+                setFile(null);
+                return;
+            }
+            setError(null); // Clear previous errors
+        }
+
+        setFile(selectedFile);
+
+        if (selectedFile && (type === 'video' || type === 'audio')) {
+            const url = URL.createObjectURL(selectedFile);
+            const media = document.createElement(type === 'video' ? 'video' : 'audio');
+            media.preload = 'metadata';
+            media.src = url;
+
+            const handleMetadata = () => {
+                if (media.duration && !isNaN(media.duration) && media.duration !== Infinity) {
+                    const minutes = Math.floor(media.duration / 60);
+                    const seconds = Math.floor(media.duration % 60);
+                    const formatted = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                    setDuration(formatted);
+                }
+                URL.revokeObjectURL(url);
+            };
+
+            media.onloadedmetadata = handleMetadata;
+
+            // Fallback for some browsers that require explicit load
+            setTimeout(() => {
+                media.load();
+            }, 100);
+        }
+    };
+
+    const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFile = e.target.files ? e.target.files[0] : null;
+
+        if (selectedFile) {
+            // Validate file type
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+            if (!allowedTypes.includes(selectedFile.type.toLowerCase())) {
+                setError('Thumbnail must be a JPG, PNG, or WEBP image.');
+                e.target.value = '';
+                setThumbnailFile(null);
+                setThumbnailPreview(null);
+                return;
+            }
+
+            // Validate file size (max 10MB)
+            if (selectedFile.size > 10 * 1024 * 1024) {
+                setError('Thumbnail size exceeds 10 MB limit.');
+                e.target.value = '';
+                setThumbnailFile(null);
+                setThumbnailPreview(null);
+                return;
+            }
+
+            setError(null);
+            setThumbnailFile(selectedFile);
+
+            // Create preview
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setThumbnailPreview(reader.result as string);
+            };
+            reader.readAsDataURL(selectedFile);
+        } else {
+            setThumbnailFile(null);
+            setThumbnailPreview(null);
         }
     };
 
@@ -169,7 +272,6 @@ export function UploadModal({ isOpen, onClose, initialType = 'video' }: UploadMo
                                 </div>
                             )}
 
-                            {/* Type Selection */}
                             {/* Type Selection - Horizontal Icon Grid */}
                             <div className="flex items-center gap-4 justify-center py-2">
                                 {[
@@ -221,30 +323,22 @@ export function UploadModal({ isOpen, onClose, initialType = 'video' }: UploadMo
 
                             {/* File Upload */}
                             <div>
-                                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Upload {type === 'blog' ? 'Header Image' : 'Media File'}</label>
+                                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                                    Upload {type === 'blog' ? 'Header Image' : 'Media File'}
+                                    <span className="text-xs text-zinc-500 ml-2 font-normal">(Max: {fileSizeLimits[type]} MB)</span>
+                                </label>
                                 <input
                                     type="file"
                                     required
-                                    onChange={(e) => {
-                                        const file = e.target.files ? e.target.files[0] : null;
-                                        setFile(file);
-
-                                        if (file && (type === 'video' || type === 'audio')) {
-                                            const url = URL.createObjectURL(file);
-                                            const media = document.createElement(type === 'video' ? 'video' : 'audio');
-                                            media.src = url;
-                                            media.onloadedmetadata = () => {
-                                                const minutes = Math.floor(media.duration / 60);
-                                                const seconds = Math.floor(media.duration % 60);
-                                                const formatted = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-                                                setDuration(formatted);
-                                                URL.revokeObjectURL(url);
-                                            };
-                                        }
-                                    }}
+                                    onChange={handleFileChange}
                                     className={`w-full px-4 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 ${s.ring} focus:border-transparent outline-none transition-all`}
                                     accept={type === 'video' ? 'video/*' : type === 'audio' ? 'audio/*' : 'image/*'}
                                 />
+                                {file && (
+                                    <p className="mt-1 text-xs text-zinc-500">
+                                        Selected: {file.name} ({(file.size / (1024 * 1024)).toFixed(2)} MB)
+                                    </p>
+                                )}
                             </div>
 
                             {/* Duration (Conditional) */}
@@ -261,6 +355,77 @@ export function UploadModal({ isOpen, onClose, initialType = 'video' }: UploadMo
                                 </div>
                             )}
 
+                            {type === 'blog' && (
+                                <div>
+                                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                                        Category
+                                    </label>
+                                    <select
+                                        value={category}
+                                        onChange={(e) => setCategory(e.target.value)}
+                                        className={`w-full px-4 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 ${s.ring} focus:border-transparent outline-none transition-all`}
+                                    >
+                                        {categories.map((cat) => (
+                                            <option key={cat} value={cat}>
+                                                {cat}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
+                            {/* Thumbnail Upload (Required for Video/Audio) */}
+                            {(type === 'video' || type === 'audio') && (
+                                <div>
+                                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                                        Thumbnail Image <span className="text-red-500">*</span>
+                                        <span className="text-xs text-zinc-500 ml-2 font-normal">(JPG, PNG, WEBP - Max: 10 MB)</span>
+                                    </label>
+                                    <div className={`border-2 border-dashed rounded-lg p-3 transition-all ${thumbnailFile ? 'border-green-400 bg-green-50 dark:bg-green-900/20' : 'border-zinc-300 dark:border-zinc-600 hover:border-zinc-400'}`}>
+                                        {thumbnailPreview ? (
+                                            <div className="flex items-center gap-3">
+                                                <img
+                                                    src={thumbnailPreview}
+                                                    alt="Thumbnail preview"
+                                                    className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                                                />
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm text-green-600 dark:text-green-400 truncate">
+                                                        {thumbnailFile?.name}
+                                                    </p>
+                                                    <p className="text-xs text-zinc-500">
+                                                        {((thumbnailFile?.size || 0) / (1024 * 1024)).toFixed(2)} MB
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setThumbnailFile(null);
+                                                        setThumbnailPreview(null);
+                                                    }}
+                                                    className="bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 transition-colors flex-shrink-0"
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <label className="cursor-pointer block">
+                                                <div className="flex items-center justify-center gap-2 py-2">
+                                                    <Image className={`w-6 h-6 ${s.icon}`} />
+                                                    <span className="text-sm text-zinc-600 dark:text-zinc-400">Click to upload thumbnail</span>
+                                                </div>
+                                                <input
+                                                    type="file"
+                                                    onChange={handleThumbnailChange}
+                                                    className="hidden"
+                                                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                                                />
+                                            </label>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Info Note */}
                             <div className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm text-blue-700 dark:text-blue-300">
                                 <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
@@ -272,13 +437,13 @@ export function UploadModal({ isOpen, onClose, initialType = 'video' }: UploadMo
                             {/* Submit Button */}
                             <button
                                 type="submit"
-                                disabled={isSubmitting}
-                                className={`w-full py-2 font-bold transition-all transform rounded-lg active:scale-90 ${isSubmitting
-                                    ? 'text-zinc-400 cursor-not-allowed'
-                                    : `${s.text} ${s.bgLight} hover:scale-[1.02]`
+                                disabled={isSubmitting || !file}
+                                className={`w-full py-2 font-bold transition-all transform rounded-lg active:scale-90 ${isSubmitting || !file
+                                    ? 'bg-zinc-200 text-zinc-400 cursor-not-allowed'
+                                    : `text-black ${s.bgLight} hover:scale-[1.02]`
                                     }`}
                             >
-                                {isSubmitting ? 'Submitting...' : 'Submit for Approval'}
+                                {isSubmitting ? 'Uploading...' : 'Submit for Approval'}
                             </button>
                         </form>
                     )}
