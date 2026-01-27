@@ -1,22 +1,26 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Mic, Star, TrendingUp, Clock, Award, AlertCircle, X, Upload, Search } from 'lucide-react';
+import { Mic, Heart, TrendingUp, Clock, Award, AlertCircle, X, Upload, Search, Play, ChevronRight, Trash2, Music, Star } from 'lucide-react';
 import { PortalLeaderboard } from './PortalLeaderboard';
 import { UploadModal } from './UploadModal';
 import { InteractiveModal } from './InteractiveModal';
 import { useAuth } from '../contexts/AuthContext';
 import { usePosts } from '../contexts/PostContext';
 import { canUpload } from '../utils/permissions';
+import { buildMediaUrl } from '../utils/media';
 
 export function AudioPortal() {
   const { user } = useAuth();
-  const { posts, votePost } = usePosts();
+  const { posts, votePost, deletePost } = usePosts();
   const [sortBy, setSortBy] = useState<'latest' | 'trending' | 'top'>('latest');
   const [showWarning, setShowWarning] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isInteractiveModalOpen, setIsInteractiveModalOpen] = useState(false);
   const [uploadType, setUploadType] = useState<'video' | 'audio' | 'blog'>('audio');
   const [searchQuery, setSearchQuery] = useState('');
+  const [hoveredTrack, setHoveredTrack] = useState<string | null>(null);
+  const [showAllTrending, setShowAllTrending] = useState(false);
+  const [showAllArtists, setShowAllArtists] = useState(false);
 
   const handleUploadClick = (type: 'video' | 'audio' | 'blog' = 'audio') => {
     setUploadType(type);
@@ -40,24 +44,22 @@ export function AudioPortal() {
     );
   });
 
-  // Then sort the filtered results
-  const sortedAudios = filteredAudios.sort((a, b: any) => {
-    if (sortBy === 'latest') return b.uploadDate.getTime() - a.uploadDate.getTime();
-    if (sortBy === 'trending') return b.views - a.views;
-    if (sortBy === 'top') return b.rating - a.rating;
-    return 0;
-  });
+  // Sort functions
+  const getSortedAudios = (audios: typeof portalAudios, sort: typeof sortBy) => {
+    return [...audios].sort((a, b) => {
+      if (sort === 'latest') return b.uploadDate.getTime() - a.uploadDate.getTime();
+      if (sort === 'trending') return b.views - a.views;
+      if (sort === 'top') return (b.votes ?? 0) - (a.votes ?? 0);
+      return 0;
+    });
+  };
 
-  const getImageUrl = (path?: string) => {
-    if (!path) return 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=800&auto=format&fit=crop';
+  const sortedAudios = getSortedAudios(filteredAudios, sortBy);
+  const allTrendingAudios = getSortedAudios(portalAudios, 'trending');
+  const trendingAudios = showAllTrending ? allTrendingAudios : allTrendingAudios.slice(0, 6);
 
-    // Check for audio/video files
-    if (path.match(/\.(mp3|wav|flac|aac|ogg|mp4|mov|avi|webm)$/i)) {
-      return 'https://images.unsplash.com/photo-1478737270239-2f52b27e9088?w=800&auto=format&fit=crop'; // Audio placeholder
-    }
-
-    if (path.startsWith('http')) return path;
-    return `http://localhost:8000/${path}`;
+  const getImageUrl = (audio: typeof portalAudios[0]) => {
+    return buildMediaUrl(audio.thumbnail) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${audio.authorName}`;
   };
 
   return (
@@ -65,38 +67,24 @@ export function AudioPortal() {
       {/* Main Content */}
       <div className="lg:col-span-2">
         {/* Header */}
-        <div className="bg-white rounded-2xl p-6 shadow-md mb-6 border-l-4 border-teal-600">
+        <div className="bg-white rounded-2xl p-6 shadow-md mb-6 border-l-4 border-[#19889A]">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-teal-600 to-cyan-700 rounded-xl flex items-center justify-center">
-              <Mic className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 bg-gradient-to-br from-[#19889A] to-[#0F5A6B] rounded-xl flex items-center justify-center">
+              <Music className="w-6 h-6 text-white" />
             </div>
             <div>
               <h1 className="text-gray-900">Audio Portal</h1>
-              <p className="text-gray-600">Listen to podcasts, music, and more</p>
+              <p className="text-gray-600">Discover amazing audio content</p>
             </div>
           </div>
-
-          {/* Warning Banner */}
-          {showWarning && (
-            <div className="bg-orange-50 border-2 border-orange-300 rounded-xl p-4 mb-4 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <div className="text-orange-900 mb-1">Invalid File Type</div>
-                <p className="text-orange-700">This file type is not allowed for the Audio Portal. Only audio files (MP3, WAV, FLAC) are accepted.</p>
-              </div>
-              <button onClick={() => setShowWarning(false)} className="text-orange-600 hover:text-orange-800">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-          )}
 
           {/* Filters */}
           <div className="flex gap-2 mb-4">
             <button
               onClick={() => setSortBy('latest')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${sortBy === 'latest'
-                ? 'bg-teal-600 text-white shadow-md'
-                : 'bg-gray-100 text-gray-700 hover:bg-teal-50'
+                ? 'bg-[#19889A] text-white shadow-md'
+                : 'bg-gray-100 text-gray-700 hover:bg-[#E8F5F6]'
                 }`}
             >
               <Clock className="w-4 h-4" />
@@ -105,8 +93,8 @@ export function AudioPortal() {
             <button
               onClick={() => setSortBy('trending')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${sortBy === 'trending'
-                ? 'bg-teal-600 text-white shadow-md'
-                : 'bg-gray-100 text-gray-700 hover:bg-teal-50'
+                ? 'bg-[#19889A] text-white shadow-md'
+                : 'bg-gray-100 text-gray-700 hover:bg-[#E8F5F6]'
                 }`}
             >
               <TrendingUp className="w-4 h-4" />
@@ -115,11 +103,11 @@ export function AudioPortal() {
             <button
               onClick={() => setSortBy('top')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${sortBy === 'top'
-                ? 'bg-teal-600 text-white shadow-md'
-                : 'bg-gray-100 text-gray-700 hover:bg-teal-50'
+                ? 'bg-[#19889A] text-white shadow-md'
+                : 'bg-gray-100 text-gray-700 hover:bg-[#E8F5F6]'
                 }`}
             >
-              <Award className="w-4 h-4" />
+              <Star className="w-4 h-4" />
               Top Rated
             </button>
           </div>
@@ -133,14 +121,14 @@ export function AudioPortal() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search Audio..."
+              placeholder="Search audio..."
               style={{ paddingLeft: '3.5rem' }}
-              className="w-full pr-10 py-3 rounded-xl border-2 border-gray-200 focus:border-teal-600 focus:outline-none transition-colors text-gray-900 placeholder-gray-400"
+              className="w-full pr-10 py-3 rounded-xl border-2 border-gray-200 focus:border-[#19889A] focus:outline-none transition-colors text-gray-900 placeholder-gray-400"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-teal-600 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#19889A] transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -148,15 +136,15 @@ export function AudioPortal() {
           </div>
         </div>
 
-        {/* Action Cards Panel - Moved to Top - Only for Creators/Admins */}
+        {/* Action Cards Panel - Only for Creators/Admins */}
         {canUpload(user) && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <button
               onClick={() => handleUploadClick('audio')}
-              className="bg-white dark:bg-zinc-900 p-8 rounded-2xl border-2 border-teal-100 dark:border-teal-900/20 hover:border-teal-600 transition-all group text-center shadow-sm hover:shadow-xl"
+              className="bg-white dark:bg-zinc-900 p-8 rounded-2xl border-2 border-[#19889A]/20 dark:border-[#19889A]/20 hover:border-[#19889A] transition-all group text-center shadow-sm hover:shadow-xl"
             >
-              <div className="w-16 h-16 bg-teal-50 dark:bg-teal-900/20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                <Upload className="w-8 h-8 text-teal-600" />
+              <div className="w-16 h-16 bg-[#E8F5F6] dark:bg-[#0F5A6B]/20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                <Upload className="w-8 h-8 text-[#19889A]" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Upload New Audio</h3>
               <p className="text-gray-500 dark:text-gray-400 text-sm">Share your sounds with the world</p>
@@ -164,7 +152,7 @@ export function AudioPortal() {
 
             <button
               onClick={handleInteractiveClick}
-              className="bg-white dark:bg-zinc-900 p-8 rounded-2xl border-2 border-zinc-100 dark:border-zinc-800 hover:border-teal-600 transition-all group text-center shadow-sm hover:shadow-xl"
+              className="bg-white dark:bg-zinc-900 p-8 rounded-2xl border-2 border-zinc-100 dark:border-zinc-800 hover:border-[#19889A] transition-all group text-center shadow-sm hover:shadow-xl"
             >
               <div className="w-16 h-16 bg-zinc-50 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
                 <Mic className="w-8 h-8 text-zinc-900 dark:text-zinc-100" />
@@ -175,57 +163,146 @@ export function AudioPortal() {
           </div>
         )}
 
-        {/* Audio Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {sortedAudios.map((audio) => {
-            return (
-              <Link
-                key={audio.id}
-                to={`/audio/${audio.id}`}
-                className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all hover:scale-[1.02] cursor-pointer border-b-4 border-teal-600 block"
-              >
-                {/* Thumbnail */}
-                <div className="relative">
-                  <img
-                    src={getImageUrl(audio.thumbnail)}
-                    alt={audio.title}
-                    className="w-full h-48 object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = 'https://images.unsplash.com/photo-1478737270239-2f52b27e9088?w=800&auto=format&fit=crop';
-                    }}
-                  />
-                  <div className="absolute bottom-2 right-2 bg-black/80 text-white px-2 py-1 rounded text-sm">
-                    {audio.duration || '0:00'}
-                  </div>
-                </div>
-
-                {/* Content */}
-                <div className="p-4">
-                  <h3 className="text-gray-900 mb-2">{audio.title}</h3>
-                  <p className="text-gray-600 mb-3">{audio.authorName}</p>
-
-                  {/* Meta */}
-                  <div className="flex items-center justify-between">
+        {/* Trending Songs Section */}
+        {trendingAudios.length > 0 && !searchQuery && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Trending Songs</h2>
+                  {allTrendingAudios.length > 6 && (
                     <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        votePost(audio.id);
-                      }}
-                      className="flex items-center gap-1 group/vote hover:scale-110 transition-transform z-10 relative"
-                      title={audio.hasVoted ? "Unvote" : "Vote"}
+                      onClick={() => setShowAllTrending(!showAllTrending)}
+                      className="text-[#19889A] hover:text-[#0F5A6B] text-sm font-medium flex items-center gap-1 transition-colors"
                     >
-                      <Star className={`w-4 h-4 transition-colors ${audio.hasVoted ? 'text-teal-600 fill-teal-600' : 'text-gray-400 group-hover/vote:text-teal-600'}`} />
-                      <span className={`text-sm font-medium ${audio.hasVoted ? 'text-teal-700' : 'text-gray-600'}`}>{audio.votes || 0}</span>
+                      {showAllTrending ? 'Show less' : 'Show all'} <ChevronRight className={`w-4 h-4 transition-transform ${showAllTrending ? 'rotate-90' : ''}`} />
                     </button>
-                    <span className="text-gray-600">{audio.views.toLocaleString()} plays</span>
-                  </div>
+                  )}
                 </div>
-              </Link>
-            );
-          })}
-        </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                  {trendingAudios.map((audio) => (
+                    <Link
+                      key={audio.id}
+                      to={`/audio/${audio.id}`}
+                      className="group text-center"
+                      onMouseEnter={() => setHoveredTrack(audio.id)}
+                      onMouseLeave={() => setHoveredTrack(null)}
+                    >
+                      <div className="relative mb-3">
+                        <img
+                          src={getImageUrl(audio)}
+                          alt={audio.title}
+                          className="w-full aspect-square rounded-2xl object-cover shadow-lg border-4 border-white group-hover:border-[#19889A] transition-all duration-300"
+                        />
+                        <div className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <div className="w-12 h-12 bg-[#19889A] rounded-full flex items-center justify-center shadow-xl">
+                            <Play className="w-6 h-6 text-white fill-white ml-0.5" />
+                          </div>
+                        </div>
+                      </div>
+                      <h3 className="text-gray-900 font-medium text-sm line-clamp-1">{audio.title}</h3>
+                      <p className="text-gray-500 text-xs">{audio.authorName}</p>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
 
+            {/* All Tracks Section */}
+            <div className="mb-8">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">
+                {searchQuery ? `Results for "${searchQuery}"` : 'All Tracks'}
+              </h2>
+
+              {sortedAudios.length === 0 ? (
+                <div className="bg-gray-50 rounded-xl p-12 text-center border-2 border-dashed border-gray-200">
+                  <Mic className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">No tracks found</h3>
+                  <p className="text-gray-500">Try a different search or upload your own!</p>
+                </div>
+              ) : (
+                <div className="bg-white rounded-xl overflow-hidden shadow-md border border-gray-100">
+                  <div className="grid grid-cols-[auto_1fr_auto_auto] gap-4 px-4 py-3 border-b border-gray-100 text-gray-500 text-sm bg-gray-50">
+                    <span className="w-10 text-center">#</span>
+                    <span>Title</span>
+                    <span className="w-20 text-center">
+                      <Heart className="w-4 h-4 mx-auto" />
+                    </span>
+                    <span className="w-16 text-right">Duration</span>
+                  </div>
+
+                  {sortedAudios.map((audio, index) => (
+                    <Link
+                      key={audio.id}
+                      to={`/audio/${audio.id}`}
+                      className="grid grid-cols-[auto_1fr_auto_auto] gap-4 px-4 py-3 hover:bg-[#E8F5F6] transition-colors group items-center border-b border-gray-50 last:border-0"
+                      onMouseEnter={() => setHoveredTrack(audio.id)}
+                      onMouseLeave={() => setHoveredTrack(null)}
+                    >
+                      <div className="w-10 text-center">
+                        {hoveredTrack === audio.id ? (
+                          <Play className="w-4 h-4 text-[#19889A] mx-auto fill-[#19889A]" />
+                        ) : (
+                          <span className="text-gray-400">{index + 1}</span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-3 min-w-0">
+                        <img
+                          src={getImageUrl(audio)}
+                          alt={audio.title}
+                          className="w-12 h-12 rounded-lg object-cover flex-shrink-0 shadow-sm"
+                        />
+                        <div className="min-w-0">
+                          <h3 className="text-gray-900 font-medium truncate group-hover:text-[#19889A] transition-colors">
+                            {audio.title}
+                          </h3>
+                          <p className="text-gray-500 text-sm truncate">{audio.authorName}</p>
+                        </div>
+                      </div>
+
+                      <div className="w-20 flex justify-center">
+                        {user && ['viewer', 'admin'].includes(user.role) && user.id !== audio.authorId ? (
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              votePost(audio.id);
+                            }}
+                            className="flex items-center gap-1 hover:scale-110 transition-transform"
+                            title={audio.hasVoted ? "Unlike" : "Like"}
+                          >
+                            <Heart className={`w-4 h-4 transition-colors ${audio.hasVoted ? 'text-red-500 fill-current' : 'text-gray-400 hover:text-red-500'}`} />
+                            <span className={`text-sm ${audio.hasVoted ? 'text-red-600' : 'text-gray-500'}`}>{audio.votes ?? 0}</span>
+                          </button>
+                        ) : (
+                          <div className="flex items-center gap-1 text-gray-400">
+                            <Heart className="w-4 h-4" />
+                            <span className="text-sm">{audio.votes ?? 0}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="w-16 text-right text-gray-500 text-sm">
+                        {audio.duration || '0:00'}
+                      </div>
+
+                      {user?.role === 'admin' && (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (confirm('Are you sure you want to delete this audio?')) {
+                              deletePost(audio.id);
+                            }
+                          }}
+                          className="w-8 flex justify-center text-red-400 hover:text-red-600 hover:scale-110 transition-all"
+                          title="Delete post"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
 
         <UploadModal
           isOpen={isUploadModalOpen}
@@ -244,6 +321,6 @@ export function AudioPortal() {
       <div className="lg:col-span-1">
         <PortalLeaderboard portalType="audio" />
       </div>
-    </div >
+    </div>
   );
 }
