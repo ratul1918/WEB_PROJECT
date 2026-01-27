@@ -1,0 +1,185 @@
+[2026-01-26 22:46:01] ----------------------------------------
+[2026-01-26 22:46:01] Request received: POST
+[2026-01-26 22:46:01] POST data: Array
+(
+    [title] => ee
+    [description] => ee
+    [type] => video
+    [duration] => 0:17
+)
+
+[2026-01-26 22:46:01] FILES data: Array
+(
+    [file] => Array
+        (
+            [name] => 7102266-hd_1920_1080_30fps.mp4
+            [full_path] => 7102266-hd_1920_1080_30fps.mp4
+            [type] => video/mp4
+            [tmp_name] => /private/var/folders/bl/c9h9m8ld6h92cshwgc7ft9x80000gn/T/php07fglk73a2a11yAVAaq
+            [error] => 0
+            [size] => 12551160
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => kremlin-affiliated-bots-dvoinik-network-910251660.jpg.webp
+            [full_path] => kremlin-affiliated-bots-dvoinik-network-910251660.jpg.webp
+            [type] => image/webp
+            [tmp_name] => /private/var/folders/bl/c9h9m8ld6h92cshwgc7ft9x80000gn/T/php3008lo9mp9n81m0VzX1
+            [error] => 0
+            [size] => 136104
+        )
+
+)
+
+[26-Jan-2026 22:46:01 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'category' in 'field list' in /Users/rafiurrahman/Desktop/uiu_talent_show/backend/api/posts/create.php:199
+Stack trace:
+#0 /Users/rafiurrahman/Desktop/uiu_talent_show/backend/api/posts/create.php(199): mysqli->query('INSERT INTO pos...')
+#1 {main}
+  thrown in /Users/rafiurrahman/Desktop/uiu_talent_show/backend/api/posts/create.php on line 199
+[2026-01-26 22:46:02] ----------------------------------------
+[2026-01-26 22:46:02] Request received: POST
+[2026-01-26 22:46:02] POST data: Array
+(
+    [title] => ee
+    [description] => ee
+    [type] => video
+    [duration] => 0:17
+)
+
+[2026-01-26 22:46:02] FILES data: Array
+(
+    [file] => Array
+        (
+            [name] => 7102266-hd_1920_1080_30fps.mp4
+            [full_path] => 7102266-hd_1920_1080_30fps.mp4
+            [type] => video/mp4
+            [tmp_name] => /private/var/folders/bl/c9h9m8ld6h92cshwgc7ft9x80000gn/T/php5fvs1rpptrav9GhK4DD
+            [error] => 0
+            [size] => 12551160
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => kremlin-affiliated-bots-dvoinik-network-910251660.jpg.webp
+            [full_path] => kremlin-affiliated-bots-dvoinik-network-910251660.jpg.webp
+            [type] => image/webp
+            [tmp_name] => /private/var/folders/bl/c9h9m8ld6h92cshwgc7ft9x80000gn/T/php7g2aqv3og84u1Dzu5YL
+            [error] => 0
+            [size] => 136104
+        )
+
+)
+
+[26-Jan-2026 22:46:02 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'category' in 'field list' in /Users/rafiurrahman/Desktop/uiu_talent_show/backend/api/posts/create.php:199
+Stack trace:
+#0 /Users/rafiurrahman/Desktop/uiu_talent_show/backend/api/posts/create.php(199): mysqli->query('INSERT INTO pos...')
+#1 {main}
+  thrown in /Users/rafiurrahman/Desktop/uiu_talent_show/backend/api/posts/create.php on line 199
+[2026-01-26 22:46:20] ----------------------------------------
+[2026-01-26 22:46:20] Request received: POST
+[2026-01-26 22:46:20] POST data: Array
+(
+    [title] => ee
+    [description] => ee
+    [type] => audio
+    [duration] => 1:06
+)
+
+[2026-01-26 22:46:20] FILES data: Array
+(
+    [file] => Array
+        (
+            [name] => 200822-black-capped-chickadee-distant-fee-bee-calls-extremely-noisy-cars-cicadas-lofi-mono-pec-11am-62539.mp3
+            [full_path] => 200822-black-capped-chickadee-distant-fee-bee-calls-extremely-noisy-cars-cicadas-lofi-mono-pec-11am-62539.mp3
+            [type] => audio/mpeg
+            [tmp_name] => /private/var/folders/bl/c9h9m8ld6h92cshwgc7ft9x80000gn/T/phpr0migqlio2lncauWsS8
+            [error] => 0
+            [size] => 1328640
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => anime-moon-landscape.jpg
+            [full_path] => anime-moon-landscape.jpg
+            [type] => image/jpeg
+            [tmp_name] => /private/var/folders/bl/c9h9m8ld6h92cshwgc7ft9x80000gn/T/phpepk9q26rgdqubuIERyw
+            [error] => 0
+            [size] => 3389627
+        )
+
+)
+
+[26-Jan-2026 22:46:20 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'category' in 'field list' in /Users/rafiurrahman/Desktop/uiu_talent_show/backend/api/posts/create.php:199
+Stack trace:
+#0 /Users/rafiurrahman/Desktop/uiu_talent_show/backend/api/posts/create.php(199): mysqli->query('INSERT INTO pos...')
+#1 {main}
+  thrown in /Users/rafiurrahman/Desktop/uiu_talent_show/backend/api/posts/create.php on line 199
+[2026-01-26 22:48:35] ----------------------------------------
+[2026-01-26 22:48:35] Request received: POST
+[2026-01-26 22:48:35] POST data: Array
+(
+    [title] => wr
+    [description] => ee
+    [type] => video
+    [duration] => 0:16
+)
+
+[2026-01-26 22:48:35] FILES data: Array
+(
+    [file] => Array
+        (
+            [name] => WhatsApp Video 2026-01-26 at 14.04.47.mp4
+            [full_path] => WhatsApp Video 2026-01-26 at 14.04.47.mp4
+            [type] => video/mp4
+            [tmp_name] => /private/var/folders/bl/c9h9m8ld6h92cshwgc7ft9x80000gn/T/phpt504el5q3t1b6ZigYf8
+            [error] => 0
+            [size] => 2858322
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => jolie.png
+            [full_path] => jolie.png
+            [type] => image/png
+            [tmp_name] => /private/var/folders/bl/c9h9m8ld6h92cshwgc7ft9x80000gn/T/phpopnk1imkbs710PyLJUo
+            [error] => 0
+            [size] => 105655
+        )
+
+)
+
+[2026-01-27 07:50:32] ----------------------------------------
+[2026-01-27 07:50:32] Request received: POST
+[2026-01-27 07:50:32] POST data: Array
+(
+    [title] => wjjwjkw
+    [description] => sss
+    [type] => video
+    [duration] => 0:17
+)
+
+[2026-01-27 07:50:32] FILES data: Array
+(
+    [file] => Array
+        (
+            [name] => 7102266-hd_1920_1080_30fps.mp4
+            [full_path] => 7102266-hd_1920_1080_30fps.mp4
+            [type] => video/mp4
+            [tmp_name] => /private/var/folders/bl/c9h9m8ld6h92cshwgc7ft9x80000gn/T/phpu0ngbg881bq04iL2qhN
+            [error] => 0
+            [size] => 12551160
+        )
+
+    [thumbnail] => Array
+        (
+            [name] => digital-art-with-person-looking-city-landscape.jpg
+            [full_path] => digital-art-with-person-looking-city-landscape.jpg
+            [type] => image/jpeg
+            [tmp_name] => /private/var/folders/bl/c9h9m8ld6h92cshwgc7ft9x80000gn/T/phpuud2bq8j7h14aD4aDDw
+            [error] => 0
+            [size] => 2453132
+        )
+
+)
+
