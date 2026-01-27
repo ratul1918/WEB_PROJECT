@@ -7,7 +7,7 @@ A React + PHP web app for showcasing student video, audio, and blog content with
 - Role-based access (viewer, creator, admin) with backend login
 - Media uploads stored in `backend/uploads` with safe filenames
 - Global audio and video players with mini players on portal routes (click mini video to reopen full player)
-- View counts increment once per visit
+- View counts increment once per visit 
 - Votes and leaderboard support (`votes`, `user_votes` tables)
 - Creator profiles with real data and search functionality
 - Like/unlike toggle system for posts and users
