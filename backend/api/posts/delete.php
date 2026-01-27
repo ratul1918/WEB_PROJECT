@@ -52,12 +52,51 @@ if ($post['user_id'] != $user_id && $role !== 'admin') {
     exit();
 }
 
-// Delete (Cascade delete should handle media if set up in DB, but good to be explicit/safe)
-// DB Schema has ON DELETE CASCADE, so deleting post is enough.
+// Gather media files to remove from storage
+$mediaFiles = [];
+$mediaStmt = $conn->prepare("SELECT file_path FROM media WHERE post_id = ?");
+if ($mediaStmt) {
+    $mediaStmt->bind_param("i", $id);
+    if ($mediaStmt->execute()) {
+        $mediaResult = $mediaStmt->get_result();
+        while ($row = $mediaResult->fetch_assoc()) {
+            $mediaFiles[] = $row['file_path'];
+        }
+    }
+    $mediaStmt->close();
+}
 
-$sql = "DELETE FROM posts WHERE id = $id";
+// Delete media records first (safety even if cascade exists)
+$deleteMediaStmt = $conn->prepare("DELETE FROM media WHERE post_id = ?");
+if ($deleteMediaStmt) {
+    $deleteMediaStmt->bind_param("i", $id);
+    $deleteMediaStmt->execute();
+    $deleteMediaStmt->close();
+}
 
-if ($conn->query($sql) === TRUE) {
+// Delete the post
+$deletePostStmt = $conn->prepare("DELETE FROM posts WHERE id = ?");
+if (!$deletePostStmt) {
+    http_response_code(500);
+    echo json_encode(["error" => "Error preparing delete statement: " . $conn->error]);
+    exit();
+}
+
+$deletePostStmt->bind_param("i", $id);
+if ($deletePostStmt->execute()) {
+    $deletePostStmt->close();
+
+    // Remove associated media files from disk
+    $basePath = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR;
+    foreach ($mediaFiles as $filePath) {
+        if (!$filePath) continue;
+        $normalized = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, ltrim($filePath, '/\\'));
+        $fullPath = $basePath . $normalized;
+        if (file_exists($fullPath)) {
+            @unlink($fullPath);
+        }
+    }
+
     echo json_encode(["message" => "Post deleted successfully"]);
 } else {
     http_response_code(500);
