@@ -68,6 +68,21 @@ export const api = {
             if (!response.ok) throw new Error('Failed to fetch posts');
             return response.json();
         },
+        listMine: async () => {
+            const response = await fetch(`${BASE_URL}/posts/list.php?mine=1`, {
+                headers: {
+                    ...getAuthHeaders(),
+                }
+            });
+            if (!response.ok) throw new Error('Failed to fetch my posts');
+            return response.json();
+        },
+        listByAuthor: async (authorId: string) => {
+            const url = `${BASE_URL}/posts/list.php?author_id=${encodeURIComponent(authorId)}&status=approved`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Failed to fetch creator posts');
+            return response.json();
+        },
         create: async (formData: FormData) => {
             const response = await fetch(`${BASE_URL}/posts/create.php`, {
                 method: 'POST',
@@ -76,7 +91,15 @@ export const api = {
                 },
                 body: formData,
             });
-            if (!response.ok) throw new Error('Failed to create post');
+            if (!response.ok) {
+                const text = await response.text();
+                try {
+                    const errorData = JSON.parse(text);
+                    throw new Error(errorData.error || errorData.message || 'Failed to create post');
+                } catch (e) {
+                    throw new Error(text || 'Failed to create post');
+                }
+            }
             return response.json();
         },
         delete: async (id: string) => {
@@ -127,6 +150,7 @@ export const api = {
         },
         // User Voting
         voteUser: async (candidateId: string) => {
+            console.log("📤 API voteUser called with candidateId:", candidateId);
             const response = await fetch(`${BASE_URL}/users/vote.php`, {
                 method: 'POST',
                 headers: {
@@ -135,14 +159,77 @@ export const api = {
                 },
                 body: JSON.stringify({ candidate_id: candidateId }),
             });
-            if (!response.ok) throw new Error('Failed to vote for user');
-            return response.json();
+            console.log("🔄 API response status:", response.status);
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("❌ API error response:", errorText);
+                throw new Error(`Failed to vote for user: ${errorText}`);
+            }
+            const data = await response.json();
+            console.log("✅ API response data:", data);
+            return data;
         },
         getUserVotes: async () => {
             const response = await fetch(`${BASE_URL}/users/votes_list.php`, {
                 headers: { ...getAuthHeaders() as any }
             });
             if (!response.ok) throw new Error('Failed to fetch user votes');
+            return response.json();
+        }
+    },
+    users: {
+        searchCreators: async (query: string) => {
+            const response = await fetch(`${BASE_URL}/users/search.php?q=${encodeURIComponent(query)}`, {
+                headers: { ...getAuthHeaders() as any }
+            });
+            if (!response.ok) throw new Error('Failed to search creators');
+            return response.json();
+        },
+        getCreator: async (id: string) => {
+            const response = await fetch(`${BASE_URL}/users/get.php?id=${encodeURIComponent(id)}`);
+            if (!response.ok) throw new Error('Failed to fetch creator');
+            return response.json();
+        },
+        getLikedContent: async (userId: string) => {
+            const url = `${BASE_URL}/users/liked_content.php?user_id=${encodeURIComponent(userId)}`;
+            console.log('📡 Fetching liked content from:', url);
+            const headers = getAuthHeaders();
+            console.log('📡 Auth headers:', headers);
+
+            const response = await fetch(url, {
+                headers: { ...headers }
+            });
+
+            console.log('📡 Liked content response status:', response.status);
+
+            if (!response.ok) {
+                const text = await response.text();
+                console.error('📡 Error response body:', text);
+                throw new Error('Failed to fetch liked content');
+            }
+
+            const data = await response.json();
+            console.log('📡 Liked content data:', data);
+            return data;
+        },
+        updateProfile: async (data: any) => {
+            const response = await fetch(`${BASE_URL}/users/update.php`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeaders() as any
+                },
+                body: JSON.stringify(data),
+            });
+            if (!response.ok) {
+                const text = await response.text();
+                try {
+                    const errorData = JSON.parse(text);
+                    throw new Error(errorData.error || 'Failed to update profile');
+                } catch (e) {
+                    throw new Error('Failed to update profile');
+                }
+            }
             return response.json();
         }
     }
