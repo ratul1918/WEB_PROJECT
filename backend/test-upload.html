@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Test - UIU Talent Showcase</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .config-box {
+            background: #f7f9fc;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 4px solid #667eea;
+        }
+        .config-box h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        .config-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .config-item:last-child {
+            border-bottom: none;
+        }
+        .config-label {
+            color: #666;
+            font-weight: 500;
+        }
+        .config-value {
+            color: #333;
+            font-weight: 600;
+        }
+        .config-value.success {
+            color: #10b981;
+        }
+        .form-group {
+            margin-bottom: 25px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+        select, input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        select:focus, input[type="file"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .file-info {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f0f4ff;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #667eea;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+        .result.success {
+            background: #d1fae5;
+            border: 2px solid #10b981;
+            color: #065f46;
+        }
+        .result.error {
+            background: #fee2e2;
+            border: 2px solid #ef4444;
+            color: #991b1b;
+        }
+        .result h4 {
+            margin-bottom: 10px;
+        }
+        .result pre {
+            background: rgba(0, 0, 0, 0.05);
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        .progress {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            margin-top: 15px;
+            overflow: hidden;
+            display: none;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Upload Test</h1>
+        <p class="subtitle">UIU Talent Showcase - File Upload Verification</p>
+
+        <div class="config-box" id="configBox">
+            <h3>⚙️ Current PHP Configuration</h3>
+            <div id="configContent">Loading...</div>
+        </div>
+
+        <form id="uploadForm">
+            <div class="form-group">
+                <label for="type">Content Type</label>
+                <select id="type" name="type" required>
+                    <option value="video">Video (Max: 500 MB)</option>
+                    <option value="audio">Audio (Max: 100 MB)</option>
+                    <option value="blog">Blog Image (Max: 50 MB)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="file">Choose File</label>
+                <input type="file" id="file" name="file" required accept="*/*">
+                <div class="file-info" id="fileInfo" style="display: none;"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="title">Title</label>
+                <input type="text" id="title" name="title" style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%;" placeholder="Test Upload" value="Test Upload" required>
+            </div>
+
+            <div class="progress" id="progress">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+
+            <button type="submit" id="submitBtn">Upload File</button>
+        </form>
+
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        // Load PHP configuration
+        fetch('check-config.php')
+            .then(res => res.json())
+            .then(data => {
+                const config = data.current_settings;
+                document.getElementById('configContent').innerHTML = `
+                    <div class="config-item">
+                        <span class="config-label">upload_max_filesize:</span>
+                        <span class="config-value success">${config.upload_max_filesize}</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="config-label">post_max_size:</span>
+                        <span class="config-value success">${config.post_max_size}</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="config-label">memory_limit:</span>
+                        <span class="config-value success">${config.memory_limit}</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="config-label">file_uploads:</span>
+                        <span class="config-value success">${config.file_uploads}</span>
+                    </div>
+                `;
+            })
+            .catch(() => {
+                document.getElementById('configContent').innerHTML = '<p style="color: #ef4444;">Failed to load configuration</p>';
+            });
+
+        // File size limits
+        const limits = {
+            video: 500 * 1024 * 1024,
+            audio: 100 * 1024 * 1024,
+            blog: 50 * 1024 * 1024
+        };
+
+        // File input change handler
+        document.getElementById('file').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const type = document.getElementById('type').value;
+            const limit = limits[type];
+            
+            if (file) {
+                const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                const limitMB = (limit / (1024 * 1024)).toFixed(0);
+                const fileInfo = document.getElementById('fileInfo');
+                
+                fileInfo.style.display = 'block';
+                fileInfo.innerHTML = `
+                    <strong>File:</strong> ${file.name}<br>
+                    <strong>Size:</strong> ${sizeMB} MB / ${limitMB} MB<br>
+                    <strong>Type:</strong> ${file.type || 'unknown'}
+                `;
+
+                if (file.size > limit) {
+                    fileInfo.style.background = '#fee2e2';
+                    fileInfo.style.color = '#991b1b';
+                    fileInfo.innerHTML += '<br><strong>⚠️ File exceeds size limit!</strong>';
+                } else {
+                    fileInfo.style.background = '#d1fae5';
+                    fileInfo.style.color = '#065f46';
+                    fileInfo.innerHTML += '<br><strong>✓ Size OK</strong>';
+                }
+            }
+        });
+
+        // Type change handler
+        document.getElementById('type').addEventListener('change', function() {
+            const fileInput = document.getElementById('file');
+            if (fileInput.files.length > 0) {
+                fileInput.dispatchEvent(new Event('change'));
+            }
+        });
+
+        // Form submit handler
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            const file = document.getElementById('file').files[0];
+            const type = document.getElementById('type').value;
+            const title = document.getElementById('title').value;
+            
+            if (!file) {
+                showResult('error', 'Please select a file');
+                return;
+            }
+
+            formData.append('file', file);
+            formData.append('type', type);
+            formData.append('title', title);
+            formData.append('description', 'Test upload from verification page');
+            formData.append('duration', '0:00');
+
+            const submitBtn = document.getElementById('submitBtn');
+            const progress = document.getElementById('progress');
+            const progressBar = document.getElementById('progressBar');
+            const result = document.getElementById('result');
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Uploading...';
+            progress.style.display = 'block';
+            result.style.display = 'none';
+            progressBar.style.width = '0%';
+
+            try {
+                // Simulate progress
+                let progressValue = 0;
+                const progressInterval = setInterval(() => {
+                    progressValue += 10;
+                    if (progressValue <= 90) {
+                        progressBar.style.width = progressValue + '%';
+                    }
+                }, 200);
+
+                const response = await fetch('http://localhost:8000/api/posts/create.php', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJyb2xlIjoiYWRtaW4ifQ.PLACEHOLDER'
+                    }
+                });
+
+                clearInterval(progressInterval);
+                progressBar.style.width = '100%';
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showResult('success', 'Upload Successful!', data);
+                } else {
+                    showResult('error', 'Upload Failed', data);
+                }
+            } catch (error) {
+                showResult('error', 'Network Error', { error: error.message });
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Upload File';
+                setTimeout(() => {
+                    progress.style.display = 'none';
+                    progressBar.style.width = '0%';
+                }, 1000);
+            }
+        });
+
+        function showResult(type, title, data) {
+            const result = document.getElementById('result');
+            result.className = 'result ' + type;
+            result.style.display = 'block';
+            result.innerHTML = `
+                <h4>${title}</h4>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            `;
+            result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    </script>
+</body>
+</html>
