@@ -1,4 +1,4 @@
-import { Trophy, Medal, Award, Star } from 'lucide-react';
+import { Trophy, Medal, Award, Heart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLeaderboard } from '../contexts/LeaderboardContext';
 
@@ -22,6 +22,9 @@ export function PortalLeaderboard({ portalType }: PortalLeaderboardProps) {
       borderItem: 'border-orange-200',
       iconColor: 'text-orange-600',
       starColor: 'text-orange-600 fill-orange-600',
+      containerBg: 'bg-white',
+      textPrimary: 'text-gray-900',
+      textSecondary: 'text-gray-600',
     },
     audio: {
       gradient: 'from-teal-600 to-cyan-700',
@@ -32,6 +35,9 @@ export function PortalLeaderboard({ portalType }: PortalLeaderboardProps) {
       borderItem: 'border-teal-200',
       iconColor: 'text-teal-600',
       starColor: 'text-teal-600 fill-teal-600',
+      containerBg: 'bg-white',
+      textPrimary: 'text-gray-900',
+      textSecondary: 'text-gray-600',
     },
     blog: {
       gradient: 'from-indigo-600 to-purple-700',
@@ -42,6 +48,9 @@ export function PortalLeaderboard({ portalType }: PortalLeaderboardProps) {
       borderItem: 'border-indigo-300',
       iconColor: 'text-indigo-600',
       starColor: 'text-indigo-600 fill-indigo-600',
+      containerBg: 'bg-white',
+      textPrimary: 'text-gray-900',
+      textSecondary: 'text-gray-600',
     },
   };
 
@@ -61,15 +70,15 @@ export function PortalLeaderboard({ portalType }: PortalLeaderboardProps) {
   };
 
   return (
-    <div className={`bg-white rounded-2xl p-6 shadow-md sticky top-24 border-t-4 ${theme.border}`}>
+    <div className={`${theme.containerBg} rounded-2xl p-6 shadow-md sticky top-24 border-t-4 ${theme.border}`}>
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <div className={`w-10 h-10 bg-gradient-to-br ${theme.gradient} rounded-lg flex items-center justify-center`}>
           <Trophy className="w-5 h-5 text-white" />
         </div>
         <div>
-          <h2 className="text-gray-900">{portalTitle} Leaderboard</h2>
-          <p className="text-gray-600">Top Contributors</p>
+          <h2 className={theme.textPrimary}>{portalTitle} Leaderboard</h2>
+          <p className={theme.textSecondary}>Top Contributors</p>
         </div>
       </div>
 
@@ -79,7 +88,7 @@ export function PortalLeaderboard({ portalType }: PortalLeaderboardProps) {
           leaderboardData.map((entry) => (
             <div
               key={entry.userId}
-              className={`p-3 rounded-xl transition-all cursor-pointer ${theme.bg} ${theme.hover} border-2 ${theme.borderItem}`}
+              className={`p-3 rounded-xl transition-all cursor-pointer ${theme.bg} ${theme.hover} border ${theme.borderItem}`}
             >
               <div className="flex items-center gap-3 mb-2">
                 {/* Rank */}
@@ -96,23 +105,23 @@ export function PortalLeaderboard({ portalType }: PortalLeaderboardProps) {
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <div className="text-gray-900 truncate font-medium">{entry.username}</div>
+                  <div className={`${theme.textPrimary} truncate font-medium`}>{entry.username}</div>
                   <div className="flex items-center gap-1">
-                    <Star className={`w-3 h-3 ${theme.starColor}`} />
-                    <span className="text-gray-600 text-sm">{entry.rating}</span>
+                    <Heart className={`w-3 h-3 ${theme.starColor}`} />
+                    <span className={`${theme.textSecondary} text-sm`}>{entry.rating}</span>
                   </div>
                 </div>
               </div>
 
               {/* Score */}
               <div className="flex items-center justify-between pl-11">
-                <span className="text-gray-600 text-sm">Total Score</span>
+                <span className={`${theme.textSecondary} text-sm`}>Total Score</span>
                 <span className={`${theme.text} font-semibold`}>{entry.totalScore.toLocaleString()}</span>
               </div>
             </div>
           ))
         ) : (
-          <div className="text-center py-8 text-gray-500">
+          <div className={`text-center py-8 ${theme.textSecondary}`}>
             <p>No contributors yet</p>
             <p className="text-sm mt-1">Be the first to upload content!</p>
           </div>
@@ -123,7 +132,7 @@ export function PortalLeaderboard({ portalType }: PortalLeaderboardProps) {
       {leaderboardData.length > 0 && (
         <button
           onClick={handleViewFullLeaderboard}
-          className={`w-full mt-4 bg-gradient-to-r ${theme.gradient} text-white py-2 px-4 rounded-lg hover:opacity-90 transition-opacity`}
+          className={`w-full mt-4 bg-gradient-to-r ${theme.gradient} text-white py-2 px-4 rounded-full font-medium hover:opacity-90 transition-opacity`}
         >
           View Full Leaderboard
         </button>
