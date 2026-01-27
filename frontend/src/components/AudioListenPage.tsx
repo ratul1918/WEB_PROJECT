@@ -2,11 +2,16 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Repeat, Shuffle, Heart, ChevronLeft } from 'lucide-react';
 import { usePosts } from '../contexts/PostContext';
+import { useAuth } from '../contexts/AuthContext';
+import { useAudioPlayer } from '../contexts/AudioPlayerContext';
 import { api } from '../services/api';
+import { buildMediaUrl } from '../utils/media';
 
 export function AudioListenPage() {
     const { id } = useParams();
-    const { posts, updatePostViews } = usePosts();
+    const { posts, updatePostViews, votePost } = usePosts();
+    const { user } = useAuth();
+    const viewIncrementedRef = useRef<string | null>(null);
 
     // Derive audio directly to avoid first-render null state
     const audio = useMemo(() => {
@@ -16,49 +21,33 @@ export function AudioListenPage() {
 
     // Increment view count on mount
     useEffect(() => {
-        if (id && audio) {
-            api.posts.incrementView(id).then(data => {
-                updatePostViews(id, data.views);
-            }).catch(console.error);
-        }
-    }, [id]);
+        if (!id || !audio) return;
+        if (viewIncrementedRef.current === id) return;
+        viewIncrementedRef.current = id;
 
-    const audioRef = useRef<HTMLAudioElement>(null);
+        api.posts.incrementView(id).then(data => {
+            updatePostViews(id, data.views);
+        }).catch(console.error);
+    }, [id, audio, updatePostViews]);
+
+    const { track, isPlaying, currentTime, duration: audioDuration, volume, isMuted, loadTrack, togglePlay: toggleAudio, seek, setVolume: setAudioVolume, toggleMute: toggleAudioMute } = useAudioPlayer();
     const progressContainerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
-
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [currentTime, setCurrentTime] = useState(0);
-    const [audioDuration, setAudioDuration] = useState(0);
-    const [volume, setVolume] = useState(0.7);
-    const [isMuted, setIsMuted] = useState(false);
     const [isLiked, setIsLiked] = useState(false);
     const [isShuffle, setIsShuffle] = useState(false);
     const [isRepeat, setIsRepeat] = useState(false);
     const [waveformData, setWaveformData] = useState<number[]>([]);
 
     useEffect(() => {
-        window.scrollTo(0, 0);
-    }, [id]);
+        if (!audio) return;
+        if (!track || String(track.id) !== String(audio.id)) {
+            loadTrack(audio, true);
+        }
+    }, [audio, track, loadTrack]);
 
     useEffect(() => {
-        const audioEl = audioRef.current;
-        if (!audioEl) return;
-
-        const handleTimeUpdate = () => setCurrentTime(audioEl.currentTime);
-        const handleLoadedMetadata = () => setAudioDuration(audioEl.duration);
-        const handleEnded = () => setIsPlaying(false);
-
-        audioEl.addEventListener('timeupdate', handleTimeUpdate);
-        audioEl.addEventListener('loadedmetadata', handleLoadedMetadata);
-        audioEl.addEventListener('ended', handleEnded);
-
-        return () => {
-            audioEl.removeEventListener('timeupdate', handleTimeUpdate);
-            audioEl.removeEventListener('loadedmetadata', handleLoadedMetadata);
-            audioEl.removeEventListener('ended', handleEnded);
-        };
-    }, [audio]);
+        window.scrollTo(0, 0);
+    }, [id]);
 
     useEffect(() => {
         generateWaveform();
@@ -108,70 +97,57 @@ export function AudioListenPage() {
         drawWaveform();
     }, [currentTime, audioDuration, waveformData]);
 
-    const togglePlay = () => {
-        const audioEl = audioRef.current;
-        if (!audioEl) return;
+    const [isDragging, setIsDragging] = useState(false);
 
-        if (isPlaying) {
-            audioEl.pause();
-        } else {
-            audioEl.play();
-        }
-        setIsPlaying(!isPlaying);
-    };
-
-    const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
-        const container = progressContainerRef.current;
-        if (!container) return;
-
-        const rect = container.getBoundingClientRect();
+    const handleSeek = (e: MouseEvent | React.MouseEvent, element: HTMLDivElement) => {
+        const rect = element.getBoundingClientRect();
         const x = e.clientX - rect.left;
-        const percentage = x / rect.width;
-        const audioEl = audioRef.current;
-
-        if (audioEl) {
-            audioEl.currentTime = percentage * audioEl.duration;
+        const percentage = Math.max(0, Math.min(1, x / rect.width));
+        if (audioDuration > 0) {
+            seek(percentage * audioDuration);
         }
     };
+
+    const handleProgressMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+        setIsDragging(true);
+        if (progressContainerRef.current) {
+            handleSeek(e, progressContainerRef.current);
+        }
+    };
+
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            if (isDragging && progressContainerRef.current) {
+                handleSeek(e, progressContainerRef.current);
+            }
+        };
+
+        const handleMouseUp = () => {
+            setIsDragging(false);
+        };
+
+        if (isDragging) {
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+        }
+
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [isDragging, audioDuration, seek]);
 
     const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newVolume = parseFloat(e.target.value);
-        setVolume(newVolume);
-        setIsMuted(newVolume === 0);
-
-        const audioEl = audioRef.current;
-        if (audioEl) {
-            audioEl.volume = newVolume;
-            audioEl.muted = newVolume === 0;
-        }
-    };
-
-    const toggleMute = () => {
-        const audioEl = audioRef.current;
-        if (!audioEl) return;
-
-        if (isMuted) {
-            audioEl.muted = false;
-            audioEl.volume = volume || 1;
-            setIsMuted(false);
-        } else {
-            audioEl.muted = true;
-            setIsMuted(true);
-        }
+        setAudioVolume(newVolume);
     };
 
     const skipBackward = () => {
-        const audioEl = audioRef.current;
-        if (audioEl) {
-            audioEl.currentTime = Math.max(0, audioEl.currentTime - 15);
-        }
+        seek(Math.max(0, currentTime - 15));
     };
 
     const skipForward = () => {
-        const audioEl = audioRef.current;
-        if (audioEl) {
-            audioEl.currentTime = Math.min(audioDuration, audioEl.currentTime + 15);
-        }
+        seek(Math.min(audioDuration, currentTime + 15));
     };
 
     const formatTime = (time: number) => {
@@ -180,6 +156,53 @@ export function AudioListenPage() {
         const seconds = Math.floor(time % 60);
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     };
+
+    // YouTube-style keyboard shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Don't trigger if user is typing in an input
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+            switch (e.code) {
+                case 'Space':
+                case 'KeyK':
+                    e.preventDefault();
+                    toggleAudio();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    seek(Math.max(0, currentTime - 5));
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    seek(Math.min(audioDuration, currentTime + 5));
+                    break;
+                case 'KeyJ':
+                    e.preventDefault();
+                    seek(Math.max(0, currentTime - 15));
+                    break;
+                case 'KeyL':
+                    e.preventDefault();
+                    seek(Math.min(audioDuration, currentTime + 15));
+                    break;
+                case 'KeyM':
+                    e.preventDefault();
+                    toggleAudioMute();
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    setAudioVolume(Math.min(1, volume + 0.1));
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    setAudioVolume(Math.max(0, volume - 0.1));
+                    break;
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [currentTime, audioDuration, volume, toggleAudio, seek, toggleAudioMute, setAudioVolume]);
 
     // Handle loading state
     if (posts.length === 0) {
@@ -210,9 +233,6 @@ export function AudioListenPage() {
     return (
         <div className="bg-[#0a0a0a] -mx-4 -mt-8 min-h-screen text-white flex flex-col items-center justify-center p-4 md:p-8">
             <div className="w-full max-w-5xl bg-gradient-to-br from-gray-900 via-gray-800 to-black rounded-3xl overflow-hidden shadow-2xl border border-white/5 p-6 md:p-12 relative">
-                {/* Hidden Audio Element */}
-                <audio ref={audioRef} src={!audio.thumbnail ? '' : (audio.thumbnail.startsWith('http') ? audio.thumbnail : `http://localhost:8000/${audio.thumbnail}`)} className="hidden" />
-
                 <div className="flex items-center mb-8 relative z-20">
                     <Link to="/audio" className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors">
                         <ChevronLeft className="w-5 h-5" />
@@ -226,7 +246,7 @@ export function AudioListenPage() {
                             <img
                                 src={!audio.thumbnail || (audio.thumbnail.match(/\.(mp3|wav|flac|aac|ogg|mp4|mov|avi|webm)$/i) || !audio.thumbnail.match(/\.(jpg|jpeg|png|gif|webp)$/i))
                                     ? 'https://images.unsplash.com/photo-1478737270239-2f52b27e9088?w=800&auto=format&fit=crop'
-                                    : (audio.thumbnail.startsWith('http') ? audio.thumbnail : `http://localhost:8000/${audio.thumbnail}`)}
+                                    : buildMediaUrl(audio.thumbnail)}
                                 alt={audio.title}
                                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                 onError={(e) => {
@@ -247,6 +267,25 @@ export function AudioListenPage() {
                         <h1 className="text-3xl md:text-5xl font-bold mb-2 tracking-tight truncate">{audio.title}</h1>
                         <p className="text-xl text-gray-400 font-medium mb-6">{audio.authorName}</p>
 
+                        <div className="flex items-center gap-4 mb-6">
+                            {user && ['viewer', 'admin'].includes(user.role) && user.id !== audio.authorId ? (
+                                <button
+                                    onClick={() => votePost(audio.id)}
+                                    className="flex items-center gap-2 text-green-400 hover:text-green-300 transition-colors"
+                                    title={audio.hasVoted ? 'Unlike' : 'Like'}
+                                >
+                                    <Heart className={`w-5 h-5 ${audio.hasVoted ? 'fill-current' : ''}`} />
+                                    <span className="font-semibold">{audio.votes ?? 0}</span>
+                                </button>
+                            ) : (
+                                <div className="flex items-center gap-2 text-gray-500">
+                                    <Heart className="w-5 h-5" />
+                                    <span className="font-semibold">{audio.votes ?? 0}</span>
+                                </div>
+                            )}
+                            <span className="text-gray-500">{audio.views.toLocaleString()} plays</span>
+                        </div>
+
                         <div className="flex items-center justify-center md:justify-start gap-4">
                             <button
                                 onClick={() => setIsShuffle(!isShuffle)}
@@ -260,7 +299,7 @@ export function AudioListenPage() {
                             </button>
 
                             <button
-                                onClick={togglePlay}
+                                onClick={toggleAudio}
                                 className="w-20 h-20 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center shadow-lg hover:shadow-green-500/30 transition-all hover:scale-105"
                             >
                                 {isPlaying ? <Pause className="w-10 h-10 text-white fill-current" /> : <Play className="w-10 h-10 text-white fill-current ml-1" />}
@@ -289,7 +328,7 @@ export function AudioListenPage() {
                     <div
                         ref={progressContainerRef}
                         className="relative h-16 bg-gray-800/30 rounded-xl cursor-pointer group/progress overflow-hidden border border-white/5"
-                        onClick={handleProgressClick}
+                        onMouseDown={handleProgressMouseDown}
                     >
                         <canvas ref={canvasRef} width={1200} height={64} className="w-full h-full" />
                     </div>
@@ -303,7 +342,7 @@ export function AudioListenPage() {
                         </button>
 
                         <div className="flex items-center gap-4 flex-1 max-w-[250px] ml-auto">
-                            <button onClick={toggleMute} className="text-gray-400 hover:text-white">
+                            <button onClick={toggleAudioMute} className="text-gray-400 hover:text-white">
                                 {isMuted || volume === 0 ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
                             </button>
                             <input
@@ -320,7 +359,10 @@ export function AudioListenPage() {
                 </div>
 
                 {isPlaying && (
-                    <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent pointer-events-none" />
+                    <div
+                        className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent"
+                        style={{ pointerEvents: 'none' }}
+                    />
                 )}
             </div>
         </div>
