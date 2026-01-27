@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Clock, Video, Mic, BookOpen, Check, X, Filter, ChevronDown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { usePosts } from '../contexts/PostContext';
+import { buildMediaUrl } from '../utils/media';
 
 export function PendingPosts() {
     const { user } = useAuth();
@@ -51,25 +52,44 @@ export function PendingPosts() {
         rejectPost(id);
     };
 
-    const getImageUrl = (path?: string) => {
-        if (!path) return 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop';
+    const getImageUrl = (post: any) => {
+        const path = post.thumbnail;
 
-        // Check for non-image extensions
-        if (path.match(/\.(mp3|wav|flac|aac|ogg|mp4|mov|avi|webm)$/i)) {
-            return 'https://images.unsplash.com/photo-1614680376593-902f74cf0d41?w=800&auto=format&fit=crop'; // Audio/Generic placeholder
+        // If no thumbnail, use type-based placeholders
+        if (!path) {
+            if (post.type === 'audio') {
+                return 'https://images.unsplash.com/photo-1614680376593-902f74cf0d41?w=800&auto=format&fit=crop';
+            }
+            if (post.type === 'video') {
+                return 'https://images.unsplash.com/photo-1536240478700-b869070f9279?w=800&auto=format&fit=crop';
+            }
+            return 'https://images.unsplash.com/photo-1499750310159-5254f4125c48?w=800&auto=format&fit=crop';
         }
 
-        if (path.startsWith('http')) return path;
-        return `http://localhost:8000/${path}`;
+        // If thumbnail is an image (uploaded thumbnail), use it directly
+        if (path.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+            const url = buildMediaUrl(path);
+            return url;
+        }
+
+        // If thumbnail points to media file, use type-based placeholders
+        if (path.match(/\.(mp3|wav|flac|aac|ogg|wma)$/i) || post.type === 'audio') {
+            return 'https://images.unsplash.com/photo-1614680376593-902f74cf0d41?w=800&auto=format&fit=crop';
+        }
+        if (path.match(/\.(mp4|mov|avi|webm|mkv)$/i) || post.type === 'video') {
+            return 'https://images.unsplash.com/photo-1536240478700-b869070f9279?w=800&auto=format&fit=crop';
+        }
+
+        return buildMediaUrl(path);
     };
 
     return (
-        <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="max-w-7xl mx-auto px-4 py-8 relative">
             {/* Header */}
-            <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-xl mb-8 border border-white/50 relative overflow-hidden">
+            <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-xl mb-8 border border-white/50 relative overflow-visible z-0">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-400/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
 
-                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="flex items-center gap-4">
                         <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/30 transform rotate-3">
                             <Clock className="w-8 h-8 text-white" />
@@ -81,37 +101,39 @@ export function PendingPosts() {
                     </div>
 
                     {/* Filter Dropdown */}
-                    <div className="relative">
+                    <div className="relative z-50">
                         <button
                             onClick={() => setIsFilterOpen(!isFilterOpen)}
-                            className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all font-semibold border-2 ${filterType !== 'all'
+                            className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-semibold border-2 whitespace-nowrap text-sm ${filterType !== 'all'
                                 ? 'bg-yellow-500 border-yellow-500 text-white shadow-lg shadow-yellow-500/30'
                                 : 'bg-white border-gray-200 text-gray-700 hover:border-yellow-400'
                                 }`}
                         >
-                            <Filter className="w-5 h-5" />
-                            {filterType === 'all' ? 'All Types' : filterType.charAt(0).toUpperCase() + filterType.slice(1)}
-                            <ChevronDown className={`w-5 h-5 transition-transform ${isFilterOpen ? 'rotate-180' : ''}`} />
+                            <Filter className="w-4 h-4" />
+                            {filterType === 'all' ? 'Filter' : filterType.charAt(0).toUpperCase() + filterType.slice(1)}
+                            <ChevronDown className={`w-4 h-4 transition-transform ${isFilterOpen ? 'rotate-180' : ''}`} />
                         </button>
 
                         {isFilterOpen && (
-                            <div className="absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden transform origin-top-right animate-in fade-in zoom-in-95 duration-200">
-                                {['all', 'video', 'audio', 'blog'].map((type) => (
-                                    <button
-                                        key={type}
-                                        onClick={() => {
-                                            setFilterType(type as any);
-                                            setIsFilterOpen(false);
-                                        }}
-                                        className={`w-full px-6 py-3 text-left transition-all font-medium flex items-center justify-between ${filterType === type
-                                            ? 'bg-yellow-50 text-yellow-700'
-                                            : 'text-gray-600 hover:bg-gray-50'
-                                            }`}
-                                    >
-                                        {type === 'all' ? 'All Types' : type.charAt(0).toUpperCase() + type.slice(1)}
-                                        {filterType === type && <Check className="w-4 h-4" />}
-                                    </button>
-                                ))}
+                            <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-200 z-[9999] min-w-max pointer-events-auto overflow-hidden">
+                                <div className="max-h-64 overflow-y-auto">
+                                    {['all', 'video', 'audio', 'blog'].map((type, index) => (
+                                        <button
+                                            key={type}
+                                            onClick={() => {
+                                                setFilterType(type as any);
+                                                setIsFilterOpen(false);
+                                            }}
+                                            className={`w-full px-4 py-2.5 text-left transition-all font-medium text-sm flex items-center justify-between hover:bg-gray-100 ${filterType === type
+                                                ? 'bg-yellow-50 text-yellow-700'
+                                                : 'text-gray-700'
+                                                } ${index < 3 ? 'border-b border-gray-100' : ''}`}
+                                        >
+                                            {type === 'all' ? 'All Types' : type.charAt(0).toUpperCase() + type.slice(1)}
+                                            {filterType === type && <Check className="w-3.5 h-3.5" />}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         )}
                     </div>
@@ -133,96 +155,94 @@ export function PendingPosts() {
                 </div>
             </div>
 
-            {/* Pending Posts List */}
-            {filteredPosts.length === 0 ? (
-                <div className="bg-white/50 backdrop-blur-sm rounded-3xl p-16 shadow-lg border border-white/50 text-center">
-                    <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <Check className="w-12 h-12 text-green-500" />
+            {/* Pending Posts List - Scrollable Container */}
+            <div className="h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                {filteredPosts.length === 0 ? (
+                    <div className="bg-white/50 backdrop-blur-sm rounded-3xl p-8 sm:p-12 md:p-16 shadow-lg border border-white/50 flex flex-col items-center justify-center min-h-[400px]">
+                        <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4 sm:mb-6">
+                            <Check className="w-10 h-10 sm:w-12 sm:h-12 text-green-500" />
+                        </div>
+                        <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 text-center">All Caught Up!</h3>
+                        <p className="text-gray-500 text-base sm:text-lg text-center max-w-md">No pending posts to review at the moment.</p>
                     </div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-2">All Caught Up!</h3>
-                    <p className="text-gray-500 text-lg">No pending posts to review at the moment.</p>
-                </div>
-            ) : (
-                <div className="grid gap-6">
-                    {filteredPosts.map((post) => {
-                        const TypeIcon = getTypeIcon(post.type);
-                        const typeColor = getTypeColor(post.type);
+                ) : (
+                    <div className="grid gap-5">
+                        {filteredPosts.map((post) => {
+                            const TypeIcon = getTypeIcon(post.type);
+                            const typeColor = getTypeColor(post.type);
 
-                        return (
-                            <div
-                                key={post.id}
-                                className="bg-white rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 border border-gray-100 group"
-                            >
-                                <div className="md:flex">
-                                    {/* Thumbnail */}
-                                    <div className="md:w-80 md:flex-shrink-0 relative overflow-hidden">
-                                        <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors z-10" />
-                                        <img
-                                            src={getImageUrl(post.thumbnail)}
-                                            alt={post.title}
-                                            className="w-full h-64 md:h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
-                                            onError={(e) => {
-                                                const target = e.target as HTMLImageElement;
-                                                // Fallback to generic image if load fails (likely audio/video file)
-                                                target.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop';
-                                            }}
-                                        />
-                                        <div className="absolute top-4 left-4 z-20">
-                                            <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold shadow-lg backdrop-blur-md ${typeColor}`}>
-                                                <TypeIcon className="w-4 h-4" />
-                                                {post.type.charAt(0).toUpperCase() + post.type.slice(1)}
-                                            </span>
+                            return (
+                                <div
+                                    key={post.id}
+                                    className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 border border-gray-200 overflow-hidden"
+                                >
+                                    <div className="flex flex-col md:flex-row gap-4 p-4">
+                                        {/* Thumbnail Container - Fixed dimensions */}
+                                        <div className="flex-shrink-0 w-full md:w-64 h-36 bg-gray-50 rounded-lg overflow-hidden border border-gray-200 relative group">
+                                            <img
+                                                src={getImageUrl(post)}
+                                                alt={post.title}
+                                                className="w-full h-full object-cover bg-gray-100 transition-transform duration-300 group-hover:scale-105"
+                                                onError={(e) => {
+                                                    const target = e.target as HTMLImageElement;
+                                                    target.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop';
+                                                }}
+                                            />
+                                            {/* Type Badge */}
+                                            <div className="absolute top-2 left-2">
+                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold shadow-sm ${typeColor}`}>
+                                                    <TypeIcon className="w-3.5 h-3.5" />
+                                                    {post.type.charAt(0).toUpperCase() + post.type.slice(1)}
+                                                </span>
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    {/* Content */}
-                                    <div className="p-8 flex-1 flex flex-col justify-between">
-                                        <div>
-                                            <div className="flex items-start justify-between mb-4">
-                                                <div>
-                                                    <h3 className="text-2xl font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors">
-                                                        {post.title}
-                                                    </h3>
-                                                    <p className="text-gray-500 font-medium flex items-center gap-2">
-                                                        by <span className="text-gray-900">{post.authorName}</span>
-                                                        <span className="w-1 h-1 bg-gray-300 rounded-full" />
-                                                        {post.uploadDate.toLocaleDateString()}
-                                                    </p>
+                                        {/* Content Section */}
+                                        <div className="flex-1 flex flex-col min-w-0">
+                                            {/* Metadata */}
+                                            <div className="flex-1 mb-3">
+                                                <h3 className="text-lg font-bold text-gray-900 mb-1.5 line-clamp-2 leading-snug">
+                                                    {post.title}
+                                                </h3>
+                                                <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                                                    <span className="font-medium text-gray-900">{post.authorName}</span>
+                                                    <span className="text-gray-400">•</span>
+                                                    <span className="text-gray-500">{post.uploadDate.toLocaleDateString()}</span>
                                                 </div>
+                                                {post.description && (
+                                                    <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                                                        {post.description}
+                                                    </p>
+                                                )}
                                             </div>
 
-                                            {post.description && (
-                                                <p className="text-gray-600 leading-relaxed mb-6 line-clamp-2">
-                                                    {post.description}
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        {/* Action Buttons */}
-                                        <div className="flex gap-4 mt-4 pt-6 border-t border-gray-100">
-                                            <button
-                                                onClick={() => handleApprove(post.id)}
-                                                style={{ backgroundColor: '#16a34a', color: 'white' }}
-                                                className="flex-1 hover:bg-green-700 px-6 py-4 rounded-xl flex items-center justify-center gap-3 transition-colors font-bold shadow-lg shadow-green-600/30"
-                                            >
-                                                <Check className="w-6 h-6" />
-                                                <span className="text-lg">Approve Post</span>
-                                            </button>
-                                            <button
-                                                onClick={() => handleReject(post.id)}
-                                                className="flex-1 bg-white border-2 border-red-100 hover:border-red-500 text-red-600 hover:text-white hover:bg-red-500 px-6 py-4 rounded-xl flex items-center justify-center gap-3 transition-all font-bold group/reject"
-                                            >
-                                                <X className="w-6 h-6 group-hover/reject:scale-110 transition-transform" />
-                                                <span className="text-lg">Reject & Trash</span>
-                                            </button>
+                                            {/* Action Buttons */}
+                                            <div className="grid grid-cols-2 gap-4 mt-auto border-t border-gray-100 pt-5">
+                                                <button
+                                                    onClick={() => handleApprove(post.id)}
+                                                    style={{ backgroundColor: '#16a34a', color: 'white' }}
+                                                    className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold transition-all shadow-sm hover:shadow active:scale-[0.98] hover:opacity-90"
+                                                >
+                                                    <Check className="w-5 h-5" />
+                                                    <span>Approve</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => handleReject(post.id)}
+                                                    style={{ backgroundColor: '#dc2626', color: 'white' }}
+                                                    className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold transition-all shadow-sm hover:shadow active:scale-[0.98] hover:opacity-90"
+                                                >
+                                                    <X className="w-5 h-5" />
+                                                    <span>Reject</span>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
