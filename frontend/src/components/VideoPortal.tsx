@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Video, Star, TrendingUp, Clock, Award, AlertCircle, X, Upload, Radio, Play, Search } from 'lucide-react';
+import { Video, Heart, TrendingUp, Clock, Award, AlertCircle, X, Upload, Radio, Play, Search, Trash2 } from 'lucide-react';
 import { PortalLeaderboard } from './PortalLeaderboard';
 import { UploadModal } from './UploadModal';
 import { InteractiveModal } from './InteractiveModal';
@@ -8,11 +8,12 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePosts } from '../contexts/PostContext';
 import { canUpload } from '../utils/permissions';
 import type { Post } from '../types/auth';
+import { buildMediaUrl } from '../utils/media';
 
 
 export function VideoPortal() {
   const { user } = useAuth();
-  const { posts, votePost } = usePosts();
+  const { posts, votePost, deletePost } = usePosts();
   const [sortBy, setSortBy] = useState<'latest' | 'trending' | 'top'>('latest');
   const [showWarning, setShowWarning] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -43,25 +44,30 @@ export function VideoPortal() {
   });
 
   // Then sort the filtered results
-  const sortedVideos = filteredVideos.sort((a, b) => {
+  const sortedVideos = [...filteredVideos].sort((a, b) => {
     if (sortBy === 'latest') return b.uploadDate.getTime() - a.uploadDate.getTime();
     if (sortBy === 'trending') return b.views - a.views;
-    if (sortBy === 'top') return b.rating - a.rating;
+    if (sortBy === 'top') return (b.votes ?? 0) - (a.votes ?? 0);
     return 0;
   });
 
-  const getImageUrl = (path?: string) => {
-    if (!path) return 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop';
-
-    // Check if it is a video file (simple extension check)
-    const isVideo = path.match(/\.(mp4|mov|avi|webm)$/i);
-    if (isVideo) {
-      // Return a default video placeholder image instead of the video file itself
-      return 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop';
+  const getImageUrl = (video: Post) => {
+    if (video.thumbnail && !video.thumbnail.match(/\.(mp4|mov|avi|webm)$/i)) {
+      return buildMediaUrl(video.thumbnail);
     }
 
-    if (path.startsWith('http')) return path;
-    return `http://localhost:8000/${path}`;
+    // Deterministic random image based on ID
+    const placeholders = [
+      'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=800&auto=format&fit=crop', // Gradient
+      'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&auto=format&fit=crop', // Cyberpunk
+      'https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?w=800&auto=format&fit=crop', // Fluid
+      'https://images.unsplash.com/photo-1626544827763-d516dce335ca?w=800&auto=format&fit=crop', // Abstract
+      'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=800&auto=format&fit=crop', // Neon
+    ];
+
+    const idSum = video.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return placeholders[idSum % placeholders.length];
   };
 
   return (
@@ -189,7 +195,7 @@ export function VideoPortal() {
             >
               <div className="relative">
                 <img
-                  src={getImageUrl(video.thumbnail)}
+                  src={getImageUrl(video)}
                   alt={video.title}
                   className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-110"
                 />
@@ -213,18 +219,41 @@ export function VideoPortal() {
 
                 {/* Meta */}
                 <div className="flex items-center justify-between">
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      votePost(video.id);
-                    }}
-                    className="flex items-center gap-1 group/vote hover:scale-110 transition-transform z-10 relative"
-                    title={video.hasVoted ? "Unvote" : "Vote"}
-                  >
-                    <Star className={`w-4 h-4 transition-colors ${video.hasVoted ? 'text-orange-500 fill-orange-500' : 'text-gray-400 group-hover/vote:text-orange-500'}`} />
-                    <span className={`text-sm font-medium ${video.hasVoted ? 'text-orange-600' : 'text-gray-600'}`}>{video.votes || 0}</span>
-                  </button>
-                  <span className="text-gray-600">{video.views.toLocaleString()} views</span>
+                  {user && ['viewer', 'admin'].includes(user.role) && user.id !== video.authorId ? (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        votePost(video.id);
+                      }}
+                      className="flex items-center gap-1 group/vote hover:scale-110 transition-transform z-10 relative"
+                      title={video.hasVoted ? "Unlike" : "Like"}
+                    >
+                      <Heart className={`w-4 h-4 transition-colors ${video.hasVoted ? 'text-red-500 fill-current' : 'text-gray-400 group-hover/vote:text-red-500'}`} />
+                      <span className={`text-sm font-medium ${video.hasVoted ? 'text-red-600' : 'text-gray-600'}`}>{video.votes ?? 0}</span>
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-1 text-gray-400">
+                      <Heart className="w-4 h-4" />
+                      <span className="text-sm">{video.votes ?? 0}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-3">
+                    <span className="text-gray-600">{video.views.toLocaleString()} views</span>
+                    {user?.role === 'admin' && (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (confirm('Are you sure you want to delete this video?')) {
+                            deletePost(video.id);
+                          }
+                        }}
+                        className="text-red-400 hover:text-red-600 hover:scale-110 transition-all"
+                        title="Delete post"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </Link>
