@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Trophy, Medal, Award, Star, Video, Mic, BookOpen, Globe, Heart } from 'lucide-react';
+import { Trophy, Medal, Award, Video, Mic, BookOpen, Globe, Heart } from 'lucide-react';
 import { useLeaderboard, LeaderboardEntry as ContextEntry } from '../contexts/LeaderboardContext';
 
 
@@ -131,13 +131,10 @@ export function Leaderboard() {
               <div className="flex-1 min-w-0">
                 <h3 className="text-gray-900 mb-1">{entry.username}</h3>
                 <div className="flex items-center gap-4 text-gray-600">
-                  <div className="flex items-center gap-1">
-                    <Star className="w-4 h-4 text-orange-500 fill-orange-500" />
-                    <span>{entry.rating}</span>
-                  </div>
                   <span>{entry.submissions} submissions</span>
                   <button
                     onClick={(e) => {
+                      console.log("❤️ Love button clicked for user:", entry.userId);
                       e.stopPropagation();
                       voteUser(entry.userId);
                     }}
@@ -145,9 +142,10 @@ export function Leaderboard() {
                         ? 'bg-rose-100 text-rose-600 hover:bg-rose-200'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                       }`}
+                    title={entry.hasVoted ? "Unlike" : "Like"}
                   >
                     <Heart className={`w-4 h-4 ${entry.hasVoted ? 'fill-rose-600' : ''}`} />
-                    <span>{entry.userVotes}</span>
+                    <span>{entry.rating}</span>
                   </button>
                   <span className="text-sm bg-gray-100 px-2 py-1 rounded text-gray-500">Rank #{entry.rank}</span>
                 </div>
