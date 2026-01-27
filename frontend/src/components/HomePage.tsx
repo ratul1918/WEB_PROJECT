@@ -1,9 +1,58 @@
 import { Video, Mic, BookOpen, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { CreatorSearch } from './CreatorSearch';
+import { useState, useEffect } from 'react';
+
+interface Stats {
+  total_videos: number;
+  total_audio: number;
+  total_blogs: number;
+  active_users: number;
+  total_posts: number;
+  views_daily: number;
+  avg_rating: number;
+}
 
 export function HomePage() {
   const navigate = useNavigate();
+  const [stats, setStats] = useState<Stats>({
+    total_videos: 0,
+    total_audio: 0,
+    total_blogs: 0,
+    active_users: 0,
+    total_posts: 0,
+    views_daily: 0,
+    avg_rating: 4.8
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/stats/summary.php');
+        if (response.ok) {
+          const data = await response.json();
+          // Ensure all values are numbers (API might return strings)
+          setStats({
+            total_videos: Number(data.total_videos) || 0,
+            total_audio: Number(data.total_audio) || 0,
+            total_blogs: Number(data.total_blogs) || 0,
+            active_users: Number(data.active_users) || 0,
+            total_posts: Number(data.total_posts) || 0,
+            views_daily: Number(data.views_daily) || 0,
+            avg_rating: Number(data.avg_rating) || 4.8
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch stats:', error);
+      }
+    };
+
+    fetchStats();
+    const interval = setInterval(fetchStats, 5000); // Poll every 5 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   const portals = [
     {
@@ -52,6 +101,10 @@ export function HomePage() {
           Discover and share amazing content across our three specialized portals. Choose a portal below to get started.
         </p>
       </motion.div>
+
+      <div className="mb-10">
+        <CreatorSearch placeholder="Search creators" />
+      </div>
 
       {/* Portal Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -115,7 +168,7 @@ export function HomePage() {
           transition={{ type: "spring", stiffness: 300 }}
         >
           <div className="text-xs font-medium text-orange-600 mb-2 uppercase tracking-wider">Total Videos</div>
-          <div className="font-mono text-4xl font-bold text-gray-900">1,234</div>
+          <div className="font-mono text-4xl font-bold text-gray-900">{stats.total_videos.toLocaleString()}</div>
         </motion.div>
         <motion.div
           className="bg-white rounded-xl p-6 shadow-md text-center border-l-4 border-orange-500"
@@ -123,7 +176,7 @@ export function HomePage() {
           transition={{ type: "spring", stiffness: 300 }}
         >
           <div className="text-xs font-medium text-orange-600 mb-2 uppercase tracking-wider">Audio Tracks</div>
-          <div className="font-mono text-4xl font-bold text-gray-900">856</div>
+          <div className="font-mono text-4xl font-bold text-gray-900">{stats.total_audio.toLocaleString()}</div>
         </motion.div>
         <motion.div
           className="bg-white rounded-xl p-6 shadow-md text-center border-l-4 border-orange-500"
@@ -131,7 +184,7 @@ export function HomePage() {
           transition={{ type: "spring", stiffness: 300 }}
         >
           <div className="text-xs font-medium text-orange-600 mb-2 uppercase tracking-wider">Blog Posts</div>
-          <div className="font-mono text-4xl font-bold text-gray-900">2,109</div>
+          <div className="font-mono text-4xl font-bold text-gray-900">{stats.total_blogs.toLocaleString()}</div>
         </motion.div>
       </motion.div>
 
@@ -159,19 +212,19 @@ export function HomePage() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
-              <div className="font-mono text-2xl font-bold text-white mb-1">5,000+</div>
+              <div className="font-mono text-2xl font-bold text-white mb-1">{stats.active_users.toLocaleString()}</div>
               <p className="text-xs text-orange-100 uppercase tracking-wide">Active Users</p>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
-              <div className="font-mono text-2xl font-bold text-white mb-1">10,000+</div>
+              <div className="font-mono text-2xl font-bold text-white mb-1">{stats.total_posts.toLocaleString()}</div>
               <p className="text-xs text-orange-100 uppercase tracking-wide">Total Posts</p>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
-              <div className="font-mono text-2xl font-bold text-white mb-1">50K+</div>
+              <div className="font-mono text-2xl font-bold text-white mb-1">{stats.views_daily.toLocaleString()}</div>
               <p className="text-xs text-orange-100 uppercase tracking-wide">Views Daily</p>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
-              <div className="font-mono text-2xl font-bold text-white mb-1">4.8★</div>
+              <div className="font-mono text-2xl font-bold text-white mb-1">{stats.avg_rating}★</div>
               <p className="text-xs text-orange-100 uppercase tracking-wide">Avg Rating</p>
             </div>
           </div>
