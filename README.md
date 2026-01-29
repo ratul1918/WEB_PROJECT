@@ -16,7 +16,7 @@ A React + PHP web app for showcasing student video, audio, and blog content with
 
 ```
 WEB_PROJECT/
-  backend/               # PHP API and upload storage
+  backend/               # PHP API and upload storage 
   frontend/              # React frontend
   AUTHENTICATION_SYSTEM.md
   MEDIA_PLAYBACK.md
