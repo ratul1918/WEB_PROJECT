@@ -12,7 +12,7 @@ A React + PHP web app for showcasing student video, audio, and blog content with
 - Creator profiles with real data and search functionality
 - Like/unlike toggle system for posts and users
 
-## Project Structure
+## Project Structure 
 
 ```
 WEB_PROJECT/
