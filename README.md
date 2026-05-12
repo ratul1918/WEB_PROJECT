@@ -33,7 +33,7 @@ WEB_PROJECT/
 ### Backend
 1. Ensure PHP can write to `backend/uploads`.
 2. Update PHP upload limits in `php.ini`:
-   - `upload_max_filesize = 4G`
+   - `upload_max_filesize = 4G` 
    - `post_max_size = 4G`
 3. Start the PHP server:
 
