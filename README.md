@@ -1,6 +1,6 @@
 # UIU Talent Showcase
 
-A React + PHP web app for showcasing student video, audio, and blog content with role-based access.
+A React + PHP web app for showcasing student video, audio, and blog content with role-based access. 
 
 ## Features
 - Video, audio, and blog portals with approval workflow
