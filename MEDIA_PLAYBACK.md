@@ -10,7 +10,7 @@ The frontend builds URLs with `frontend/src/utils/media.ts` to ensure proper enc
 - `frontend/src/components/MiniAudioPlayer.tsx` appears on non-detail routes when a track exists.
 - Playback state (play/pause, time, volume) persists across navigation.
 
-## Video Playback
+## Video Playback 
 - `frontend/src/contexts/VideoPlayerContext.tsx` owns a single global `<video>` element.
 - The video element is portaled into the active view so playback continues during navigation.
 - `frontend/src/components/VideoWatchPage.tsx` sets the portal target for the full player.
