@@ -9,7 +9,7 @@ Successfully fixed PHP file upload issues by identifying and updating the active
 ## ✅ Changes Made
 
 ### 1. **Identified Active Configuration**
-- Located active php.ini: `C:\php\php.ini`
+- Located active php.ini: `C:\php\php.ini` 
 - Created diagnostic tools to check current settings
 
 ### 2. **Updated php.ini Settings**
